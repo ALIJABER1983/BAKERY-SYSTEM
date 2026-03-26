@@ -218,7 +218,7 @@ def init_db() -> None:
         conn.close()
 
 
-app = app = Flask(__name__, static_folder='.', static_url_path='')
+app = app = app = Flask(__name__, static_folder='public', static_url_path='/static')
 app.secret_key = os.environ.get('SECRET_KEY', 'bakery-change-me-in-production')
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
