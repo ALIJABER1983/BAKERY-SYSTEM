@@ -319,7 +319,14 @@ def index():
 @app.get('/health')
 def health():
     return jsonify({'ok': True, 'backend': 'postgres' if IS_POSTGRES else 'sqlite'})
-
+@app.get('/force-sync-users')
+def force_sync_users():
+    cfg = load_default_master_config()
+    write_state('bakery_master_config_v1', cfg)
+    return jsonify({
+        'ok': True,
+        'users': [u['username'] for u in cfg.get('users', [])]
+    })
 
 @app.post('/api/login')
 def login():
