@@ -327,7 +327,10 @@ def force_sync_users():
         'ok': True,
         'users': [u['username'] for u in cfg.get('users', [])]
     })
-
+@app.get('/debug-users')
+def debug_users():
+    rows = fetchall("SELECT username, password, role, active, label FROM users ORDER BY username")
+    return jsonify({"ok": True, "users": rows})
 @app.post('/api/login')
 def login():
     payload = request.get_json(silent=True) or {}
