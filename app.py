@@ -207,6 +207,7 @@ def init_db() -> None:
         else:
             existing_config = json.loads(row['value'])
             sync_users_from_config(conn, existing_config)
+            sync_users_from_config(conn, load_default_master_config())
 
         for key, value in APP_STATE_DEFAULTS.items():
             conn.execute(
