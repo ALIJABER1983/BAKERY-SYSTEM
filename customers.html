@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظام إدارة مشغل المهندس للمخبوزات - العملاء والمبيعات</title>
+  <style>
+    :root{
+      --navy:#1d2b47;
+      --navy-soft:#314567;
+      --bg:#eef2f6;
+      --card:#ffffff;
+      --line:#d8e0ea;
+      --text:#17304f;
+      --orange:#f2a20b;
+      --orange-2:#d68500;
+      --soft-orange:#fbf6e8;
+      --green:#18a54a;
+      --mint:#e9fff0;
+      --purple:#4c4fe7;
+      --shadow:0 10px 30px rgba(11,22,39,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:"Cairo","Tajawal","Segoe UI",Tahoma,Arial,sans-serif}
+    .hidden{display:none!important}
+    .app-shell{min-height:100vh}
+    .login-screen{min-height:100vh;background:var(--navy);display:flex;align-items:center;justify-content:center;padding:24px}
+    .login-card{width:100%;max-width:500px;border-radius:24px;overflow:hidden;background:#fff;box-shadow:var(--shadow)}
+    .login-top{background:var(--navy);padding:34px 36px 24px;color:#fff;text-align:center}
+    .shield{width:62px;height:62px;border-radius:50%;background:var(--orange);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:30px}
+    .login-top h1{margin:0 0 10px;color:#ffbe33;font-size:28px;font-weight:900}
+    .login-top p{margin:0;color:#dfe6f2;font-size:20px}
+    .login-body{padding:30px 28px}
+    .field{margin-bottom:18px}
+    .label{display:block;margin-bottom:8px;font-size:18px;font-weight:800;color:#465a76}
+    .input, select{width:100%;height:56px;border:2px solid #dbe3ee;border-radius:14px;background:#fff;padding:0 16px;font-size:18px;color:var(--text)}
+    .input:focus, select:focus{outline:none;border-color:var(--orange)}
+    .btn{height:54px;border:none;border-radius:12px;padding:0 18px;font-size:18px;font-weight:900;cursor:pointer}
+    .btn-primary{background:var(--orange);color:#111}
+    .topbar{display:none!important;background:var(--navy);padding:4px 20px 0;color:#fff;box-shadow:var(--shadow);position:sticky;top:0;z-index:20}
+    .top-inner{max-width:1460px;margin:0 auto}
+    .top-row{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+    .title-wrap{display:flex;align-items:center;gap:14px;color:#ffb320;font-size:29px;font-weight:900}
+    .left-tools{display:flex;gap:10px;align-items:center}
+    .pill-btn{background:var(--navy-soft);color:#fff;border:none;border-radius:12px;height:44px;padding:0 18px;font-size:16px;font-weight:800;cursor:pointer}
+    .tabs{display:flex;gap:10px;align-items:flex-end;overflow:auto;padding:8px 0 0}
+    .main-tab{background:var(--navy-soft);color:#dfe8f5;border:none;height:54px;padding:0 28px;font-size:18px;font-weight:800;cursor:pointer;white-space:nowrap;border-radius:16px 16px 0 0}
+    .main-tab.active{background:var(--orange);color:#1b2436}
+    .page{max-width:1460px;margin:0 auto 24px;padding:0 18px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:0 2px 0 rgba(255,255,255,.8) inset}
+    .filters{padding:14px 18px 18px}
+    .filters-grid{display:grid;grid-template-columns:1.2fr 1.35fr 1fr .8fr .8fr .8fr;gap:14px;align-items:end}
+    .field-sm .input,.field-sm select,.field-sm input{height:48px;font-size:16px}
+    .print-main,.print-btn{background:var(--navy);color:#fff;height:46px;border:none;border-radius:12px;padding:0 22px;font-size:18px;font-weight:900;cursor:pointer}
+    .print-btn{background:#dbe3ef;color:#203552;height:42px;font-size:19px}
+    #customerSelect{background:#fbf6e8;border-color:#e9b13d;color:#9b5e00;font-weight:900}
+    .search-pill{font-size:15px;color:#5e718a;background:#f4f7fb;border:1px solid #e1e8f1;padding:8px 10px;border-radius:10px;display:inline-block;margin-top:10px}
+    .section-card{margin-top:10px;overflow:hidden}
+    .section-tabs{display:flex;border-bottom:1px solid var(--line);background:#fff}
+    .section-tab{padding:18px 28px;border:none;background:#fff;font-size:18px;font-weight:800;color:#556a86;cursor:pointer;border-left:1px solid var(--line)}
+    .section-tab.active{color:var(--orange-2);box-shadow:inset 0 -3px 0 var(--orange)}
+    .invoice-header{background:var(--soft-orange);padding:18px;border-bottom:1px solid #eee6cf;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .invoice-title{font-size:20px;font-weight:900;color:#11263f;text-align:right;flex:1}
+    .invoice-title span{color:#c97f02}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:16px 14px;border-bottom:1px solid #e7edf5;text-align:right;font-size:16px}
+    thead th{background:#edf2f8;color:#37506d;font-size:18px}
+    .qty-input{width:110px;height:40px;border:2px solid #d7deea;border-radius:8px;text-align:center;font-size:18px;color:#74849a;background:#fff}
+    .summary-footer{background:var(--navy);margin:18px;border-radius:18px;color:#fff;padding:18px 22px}
+    .summary-top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+    .payment-box{display:flex;align-items:center;gap:14px;background:#263855;padding:14px;border-radius:14px;min-width:350px}
+    .payment-box input{width:140px;height:48px;border:none;border-radius:8px;background:#edf7ef;color:#8d95a3;font-size:20px;font-weight:800;text-align:center}
+    .payment-label{color:#3ce076;font-size:18px;font-weight:900}
+    .total-big{font-size:24px;font-weight:900}
+    .total-big span{color:#ffbf2f}
+    .remaining{border-top:1px solid rgba(255,255,255,.12);margin-top:14px;padding-top:14px;font-size:18px;color:#dfe7f3}
+    .remaining strong{display:block;font-size:28px;color:#fff;margin-top:10px}
+    .monthly-toolbar{padding:16px 18px;border-bottom:1px solid var(--line);background:var(--soft-orange);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+    .toolbar-buttons{display:flex;gap:10px;flex-wrap:wrap}
+    .btn-navy{background:var(--navy);color:#fff}
+    .btn-white{background:#dde5f0;color:#203552}
+    .btn-purple{background:var(--purple);color:#fff}
+    .btn-green{background:#16a34a;color:#fff}
+    .btn-mint{background:var(--mint);color:#1a7d3d;border:1px solid #b9e6c6}
+    .filters-line{padding:16px 18px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr;gap:12px}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 18px}
+    .stat-box{border:1px solid var(--line);border-radius:14px;padding:14px 18px;min-height:84px;background:#fff}
+    .stat-box strong{display:block;font-size:18px;color:#7e8ea3;margin-bottom:8px}
+    .stat-box .num{font-size:24px;font-weight:900}
+    .stat-box.green{box-shadow:inset 0 0 0 1px #bde5c5}.stat-box.green .num{color:#16a34a}
+    .stat-box.orange{box-shadow:inset 0 0 0 1px #efd79d}.stat-box.orange .num{color:#c66c00}
+    .stat-box.dark .num{color:#18314f}
+    .annual-wrap{padding:18px}
+    .annual-table{max-width:860px;margin:0 auto;border-radius:18px;overflow:hidden;border:1px solid var(--line)}
+    .annual-total{background:var(--navy);color:#fff;font-size:18px;font-weight:900}
+    .annual-total .green-text{color:#2fe16d}.annual-total .orange-text{color:#ffb22e}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(14,22,39,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+    .modal{width:min(860px,100%);background:#fff;border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+    .modal-head{background:var(--navy);color:#fff;padding:18px 22px;display:flex;justify-content:space-between;align-items:center}
+    .modal-title{font-size:22px;font-weight:900}
+    .modal-body{padding:20px 22px;max-height:70vh;overflow:auto}
+    .close-btn{background:transparent;border:none;color:#fff;font-size:24px;cursor:pointer}
+    .report-box{border:1px solid var(--line);border-radius:14px;background:#fbfdff;padding:16px;line-height:1.9;font-size:18px;white-space:pre-wrap}
+    .status-note{margin-top:10px;color:#7a8798;font-size:15px}
+    @page{size:A4;margin:12mm}
+    @media print{
+      body{background:#fff}
+      .topbar,.filters,.section-tabs,.toolbar-buttons,.modal-backdrop,.print-btn,.print-main{display:none!important}
+      .page{max-width:none;margin:0;padding:0}
+      .card{border:none;box-shadow:none}
+      .print-header{display:block!important;position:relative;overflow:hidden;border:3px solid #1d2b47;border-radius:18px;padding:18px 22px 16px;margin:0 0 16px 0;
+        background:
+          radial-gradient(circle at 12% 28%, rgba(255,255,255,.28), transparent 18%),
+          radial-gradient(circle at 88% 24%, rgba(255,255,255,.20), transparent 16%),
+          linear-gradient(135deg, #1d2b47 0%, #23375d 38%, #f2a20b 100%);
+        color:#fff}
+      .print-header:before{content:"🥖  🍞  🥐";position:absolute;left:22px;top:14px;font-size:22px;opacity:.95}
+      .print-header:after{content:"🧁  🥯  🍞";position:absolute;left:22px;bottom:12px;font-size:20px;opacity:.88}
+      .print-header h1{margin:0;color:#fff;font-size:28px;font-weight:900}
+      .print-header .sub{margin-top:8px;font-size:15px;color:#eef4ff;font-weight:700}
+      .print-header .meta{margin-top:10px;display:flex;gap:12px;flex-wrap:wrap}
+      .print-header .chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);padding:6px 10px;border-radius:999px;font-size:14px;font-weight:800}
+      .summary-footer{color:#000;background:#fff;border:1px solid #ccc}
+      .payment-box{background:#fff;border:1px solid #ccc}
+      .total-big span,.payment-label{color:#000}
+      .remaining strong{color:#000}
+      thead th{background:#f1f4f8 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      #monthlyTab .monthly-toolbar,
+      #monthlyTab .filters-line,
+      #monthlyTab .stats-grid{display:none!important}
+      #monthlyTab .section-note-print{display:block!important;margin:0 0 10px 0;padding:10px 12px;border:1px solid #d7dee8;border-radius:10px;background:#fafcff;font-size:15px;color:#2a3d57}
+      #monthlyTab table{margin-top:0}
+      #annualTab .monthly-toolbar{display:none!important}
+    }
+    @media (max-width:1200px){
+      .filters-grid{grid-template-columns:repeat(3,1fr)}
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+      .filters-line{grid-template-columns:repeat(2,1fr)}
+    }
+    @media (max-width:760px){
+      .filters-grid,.filters-line,.stats-grid{grid-template-columns:1fr}
+      .title-wrap{font-size:20px}
+      .main-tab{font-size:16px;padding:0 18px}
+      .section-tab{padding:16px}
+      .payment-box{min-width:100%}
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <section id="loginScreen" class="login-screen">
+      <div class="login-card">
+        <div class="login-top">
+          <div class="shield">🛡</div>
+          <h1>تسجيل الدخول للنظام</h1>
+          <p>يرجى إدخال بيانات الدخول للمتابعة إلى النظام.</p>
+        </div>
+        <div class="login-body">
+          <div class="field">
+            <label class="label">اسم المستخدم</label>
+            <input id="username" class="input" value="admin" />
+          </div>
+          <div class="field">
+            <label class="label">كلمة المرور</label>
+            <input id="password" type="password" class="input" value="1234" />
+          </div>
+          <button id="loginBtn" class="btn btn-primary" style="width:100%">دخول</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="appScreen" class="hidden">
+      <header class="topbar">
+        <div class="top-inner">
+          <div class="top-row">
+            <div class="title-wrap"><span>🕘</span> نظام إدارة مشغل المهندس للمخبوزات</div>
+            <div class="left-tools">
+              <button class="pill-btn">المدير - admin 🛡</button>
+              <button id="logoutBtn" class="pill-btn">خروج ⎋</button>
+            </div>
+          </div>
+          <div class="tabs">
+            <button class="main-tab active">العملاء والمبيعات 👥</button>
+            <button class="main-tab">المصاريف والعمال 🎁</button>
+            <button class="main-tab">احتساب أجور العمال 🧾</button>
+            <button class="main-tab">التحليل العام ◔</button>
+            <button class="main-tab">الإعدادات العامة ⚙</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="page">
+        <div class="print-header hidden" id="printHeader">
+          <h1>نظام إدارة مشغل المهندس للمخبوزات</h1>
+          <div class="sub" id="printHeaderSub">كشف</div>
+          <div class="meta">
+            <span class="chip" id="printChipCustomer">العميل: -</span>
+            <span class="chip" id="printChipDate">التاريخ: -</span>
+            <span class="chip" id="printChipTab">النوع: -</span>
+          </div>
+        </div>
+        
+
+        <section class="card filters">
+          <div class="filters-grid">
+            <div class="field-sm">
+              <label class="label">اسم العميل</label>
+              <select id="customerSelect"></select>
+            </div>
+            <div class="field-sm">
+              <label class="label">بحث بالمادة أو العميل</label>
+              <input id="searchInput" class="input" placeholder="...ابحث" />
+            </div>
+            <div class="field-sm">
+              <label class="label">رقم الهاتف والواتساب</label>
+              <input id="phoneInput" class="input" value="غير مضاف" />
+            </div>
+            <div class="field-sm">
+              <label class="label">السنة</label>
+              <input id="yearInput" class="input" type="number" />
+            </div>
+            <div class="field-sm">
+              <label class="label">الشهر</label>
+              <input id="monthInput" class="input" type="number" min="1" max="12" />
+            </div>
+            <div class="field-sm">
+              <label class="label">اليوم</label>
+              <input id="dayInput" class="input" type="number" min="1" max="31" />
+            </div>
+          </div>
+          <div style="margin-top:14px"><button id="printPageBtn" class="print-main">طباعة الصفحة الحالية 🖨</button></div>
+          <div id="searchBadge" class="search-pill hidden"></div>
+        </section>
+
+        <section class="card section-card">
+          <div class="section-tabs">
+            <button class="section-tab active" data-tab="daily">إدخال يومي</button>
+            <button class="section-tab" data-tab="monthly">تجميع شهري</button>
+            <button class="section-tab" data-tab="annual">تجميع سنوي</button>
+          </div>
+
+          <div id="dailyTab">
+            <div class="invoice-header">
+              <div class="invoice-title" id="invoiceTitle"></div>
+              <button class="print-btn js-print">طباعة 🖨</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:22%">المادة</th>
+                  <th style="width:18%">السعر</th>
+                  <th style="width:20%">الكمية</th>
+                  <th>المجموع</th>
+                </tr>
+              </thead>
+              <tbody id="dailyRows"></tbody>
+            </table>
+            <div class="summary-footer">
+              <div class="summary-top">
+                <div class="total-big">المبلغ الإجمالي للمسحوبات: <span id="withdrawTotal">0.00</span> دينار</div>
+                <div class="payment-box">
+                  <div class="payment-label">الدفعة المقبوضة: 💼</div>
+                  <input id="paymentInput" type="number" step="0.01" value="0.00" />
+                </div>
+              </div>
+              <div class="remaining">الرصيد المتبقي المطلوب لهذا اليوم:<strong id="remainingTotal">0.00 دينار</strong></div>
+            </div>
+          </div>
+
+          <div id="monthlyTab" class="hidden">
+            <div class="section-note-print hidden" id="monthlyPrintNote">كشف شهري مبسط للعميل يشمل الأيام والمواد والأسعار والدفعات والمبالغ المستحقة فقط.</div>
+            <div class="monthly-toolbar">
+              <div class="invoice-title" id="monthlyTitle"></div>
+              <div class="toolbar-buttons">
+                <button class="btn btn-green" id="btnWhatsappStatement">كشف واتساب 📞</button>
+                <button class="btn btn-mint" id="btnYearStatement">كشف سنوي 📞</button>
+                <button class="btn btn-white" id="btnCustomMessage">رسالة مخصصة 📞</button>
+                <button class="btn btn-green" id="btnWhatsappCompose">صياغة واتساب ✨</button>
+                <button class="btn btn-purple" id="btnMiniAnalysis">تحليل مختصر 🗑</button>
+                <button class="btn btn-white js-print">طباعة 🖨</button>
+                <button class="btn btn-navy">إكسل ⤓</button>
+              </div>
+            </div>
+            <div class="filters-line">
+              <div class="field-sm"><label class="label">فلترة حسب المادة</label><select id="materialFilter"><option>كل المواد</option></select></div>
+              <div class="field-sm"><label class="label">الحالة</label><select id="statusFilterMonthly"><option>أيام بها حركة</option><option>كل الأيام</option><option>أعلى يوم</option><option>أقل يوم</option><option>أعلى بيع</option><option>أقل بيع</option><option>أعلى مادة</option><option>أقل مادة</option></select></div>
+              <div class="field-sm"><label class="label">أقل مبلغ</label><input class="input" value="0" /></div>
+              <div class="field-sm"><label class="label">من يوم</label><input class="input" value="1" /></div>
+              <div class="field-sm"><label class="label">إلى يوم</label><input class="input" value="31" /></div>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-box"><strong>عدد الأيام المعروضة</strong><div class="num">1</div></div>
+              <div class="stat-box orange"><strong>إجمالي المبيعات</strong><div class="num" id="monthlySales">0.00</div></div>
+              <div class="stat-box green"><strong>إجمالي المقبوضات</strong><div class="num" id="monthlyPaid">0.00</div></div>
+              <div class="stat-box dark"><strong>الرصيد</strong><div class="num" id="monthlyBalance">0.00</div></div>
+            </div>
+            <table id="monthlyTable"></table>
+          </div>
+
+          <div id="annualTab" class="hidden">
+            <div class="monthly-toolbar" style="background:#fff">
+              <div class="invoice-title" id="annualTitle"></div>
+              <div class="toolbar-buttons">
+                <button class="btn btn-white js-print">طباعة 🖨</button>
+                <button class="btn btn-navy">إكسل ⤓</button>
+              </div>
+            </div>
+            <div class="annual-wrap">
+              <div class="annual-table" id="annualTableWrap"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <div id="modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title" id="modalTitle">تفاصيل</div>
+        <button class="close-btn" id="closeModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="report-box" id="modalContent"></div>
+        <div class="status-note" id="modalNote"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SALES_STORAGE_KEY = 'bakery_sales_v1';
+    
+const MASTER_CONFIG_KEY='bakery_master_config_v1';
+const SESSION_KEY='bakery_session_v1';
+const DEFAULT_MASTER_CONFIG = {"bakeryName": "مشغل المهندس للمخبوزات", "customers": {"الباشا": {"phone": "غير مضاف", "products": [["عربي", 1.6], ["لف", 1.1], ["فرنسي", 0.1], ["برجر", 0.11], ["صمون", 0.15], ["إيطالي", 0.15]]}, "شاورما مول": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["ارباع", 1.0], ["مدور", 0.1], ["خبز جواد", 0.6]]}, "حجر وصاج": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["لف", 1.0]]}, "غيث": {"phone": "غير مضاف", "products": [["عربي", 1.6], ["لف", 1.1], ["مدور", 0.08]]}, "شهبندر الاذاعة": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["ارباع", 1.0], ["فرنسي", 0.1], ["إيطالي", 0.2], ["برجر", 0.1], ["بروستد كيس", 0.45], ["خبز لب", 0.6], ["تورتيلا كبير  او صغير", 1.5]]}, "شهبندر المدينه": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["ارباع", 1.0], ["فرنسي", 0.1], ["إيطالي", 0.2], ["برجر", 0.1], ["بروستد كيس", 0.45], ["خبز لب", 0.6], ["تورتيلا كبير  او صغير", 1.5]]}, "ابو كف": {"phone": "غير مضاف", "products": [["عربي", 1.6], ["لف", 1.1], ["فرنسي", 0.1], ["برجر", 0.11]]}, "ابو مويس ابو نصير": {"phone": "غير مضاف", "products": [["عربي", 1.4], ["لف", 0.9], ["صمون", 0.11], ["لبناني", 0.6]]}, "ابو مويس طبربور": {"phone": "غير مضاف", "products": [["عربي", 1.4], ["لف", 0.9], ["صمون", 0.11], ["لبناني", 0.6]]}, "ابو مويس الزرقاء": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["لف", 1.0], ["صمون", 0.11], ["لبناني", 0.6]]}, "انوار القدس": {"phone": "غير مضاف", "products": [["مطبق", 1.6], ["لف", 1.1], ["مدور", 0.08], ["فرنسي", 0.1], ["برجر", 0.11], ["إيطالي", 0.2]]}, "ريم خريبة السوق": {"phone": "غير مضاف", "products": [["عربي", 1.6], ["لف", 0.9]]}, "ريم الاذاعة": {"phone": "غير مضاف", "products": [["عربي", 1.4], ["لف", 0.9], ["صمون", 0.11], ["كعك", 0.09], ["خبز لبناني", 0.625]]}, "شي شاورما السابع": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["برايز", 0.06], ["إيطالي", 0.15], ["لبناني", 0.7]]}, "شي شاورما الرابية": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["برايز", 0.06], ["إيطالي", 0.15], ["لبناني", 0.7]]}, "شي شاورما مرج الحمام": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["برايز", 0.06], ["إيطالي", 0.15], ["لبناني", 0.7]]}, "شي شاورما الرينبو": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["برايز", 0.06], ["إيطالي", 0.15], ["لبناني", 0.7]]}, "القاهرة": {"phone": "غير مضاف", "products": [["عربي", 1.4], ["لف", 0.9]]}, "ملحمة المرج": {"phone": "غير مضاف", "products": [["عربي", 1.5]]}, "مخبز الصديق": {"phone": "غير مضاف", "products": [["مدور", 0.08]]}, "ملحمة الحرمين": {"phone": "غير مضاف", "products": [["مطبق", 2.0]]}, "ملحمة الحصري": {"phone": "غير مضاف", "products": [["مطبق", 1.8]]}, "الاعتماد": {"phone": "غير مضاف", "products": [["مدور", 0.07]]}, "فروجنا مكة": {"phone": "غير مضاف", "products": [["مدور", 0.85]]}, "ملحمة اللويبدة": {"phone": "غير مضاف", "products": [["ربطة", 3.75]]}, "مطعم فرخة": {"phone": "غير مضاف", "products": [["عربي", 1.4], ["لف", 1.0], ["مدور", 0.08], ["فرنسي", 0.1], ["برجر", 0.11], ["إيطالي", 0.2], ["لبناني", 0.5]]}, "هيا الحسين": {"phone": "غير مضاف", "products": [["عربي", 1.4], ["ارباع", 0.95], ["ايطالي", 0.17], ["فرنسي", 0.1], ["برغر", 0.1], ["البروستد الربطه", 0.45]]}}, "expenses": {"general": ["غاز", "طحين", "محروقات", "صيانة", "أكياس ومواد تغليف", "زيت", "خس", "لزيق", "عدة مشغل", "ديزل ايمن شتيله", "ديزل ايمن حصوة"], "workers": ["ايمن حصوه", "عجين ابو محمد", "عجين عماد", "محمود الصعيدي", "طارق", "شمس", "حاتم", "محمد فرع", "احمد جمال", "سيطره", "سعيد", "احمد شوقي", "جمعه", "محمود الطفيلي", "احمد الطفيلي", "مصطفى الصعيدي", "زيد", "عبد الهادي", "عماد", "عدي", "المغربي", "ابو محمد", "علي", "اوشا", "ممدوح", "فليكس", "ايهاب", "قاسم", "عمران"], "purchases": ["خبز افرنجي", "فرنسي", "برجر", "ايطالي كبير", "ايطالي صغير", "كعك", "حمام", "صمون", "خبز الطباخي", "خبز برايز", "برجر جواد", "خبز جواد"]}, "wages": {"categories": [{"id": "bashkara", "name": "عمال البشكرة", "note": "مأخوذ من الشيت المرفق: حساب عمال البشكرة 600 عالفرش", "rate": 0.6, "rateLabel": "الأجرة: 0.6 دينار / فرش", "unit": "فرش", "workers": ["محمود الصعيدي", "طارق", "شمس", "حاتم", "محمد فزاع", "احمد جمال", "سيطره", "سعيد", "احمد شوقي", "جمعه", "محمود الطفيلي", "احمد الطفيلي", "مصطفى الصعيدي", "زيد", "عبد الهادي", "عماد", "عدي", "المغربي"]}, {"id": "ajana", "name": "عمال العجانة", "note": "مأخوذ من الشيت المرفق: حساب عمال العجانة 100 عالفرش", "rate": 0.1, "rateLabel": "الأجرة: 0.1 دينار / فرش", "unit": "فرش", "workers": ["ابو محمد", "عماد"]}, {"id": "arabi", "name": "عمال البسطة - عربي وأربع وتحميل طحين", "note": "مأخوذ من الشيت المرفق: الأجرة 1 قرش للفرش", "rate": 0.01, "rateLabel": "الأجرة: 0.01 دينار / فرش", "unit": "فرش", "workers": ["علي", "اوشا", "ممدوح", "فليكس", "ايهاب", "قاسم", "عمران"]}, {"id": "laf", "name": "عمال البسطة - لف", "note": "مأخوذ من الشيت المرفق: الأجرة 7 قروش للفرش", "rate": 0.07, "rateLabel": "الأجرة: 0.07 دينار / فرش", "unit": "فرش", "workers": ["علي", "اوشا", "ممدوح", "فليكس", "ايهاب", "قاسم", "عمران"]}, {"id": "modawar", "name": "عمال البسطة - مدور ومطبق", "note": "مأخوذ من الشيت المرفق: الأجرة 5 قروش للفرش", "rate": 0.05, "rateLabel": "الأجرة: 0.05 دينار / فرش", "unit": "فرش", "workers": ["علي", "اوشا", "ممدوح", "فليكس", "ايهاب", "قاسم", "عمران"]}]}, "users": [{"username": "admin", "password": "1234", "role": "admin", "active": true, "label": "المدير"}, {"username": "user1", "password": "1111", "role": "entry", "active": true, "label": "المستخدم 1"}, {"username": "user2", "password": "2222", "role": "entry", "active": true, "label": "المستخدم 2"}, {"username": "user3", "password": "3333", "role": "entry", "active": true, "label": "المستخدم 3"}]};
+function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
+function getMasterConfig(){ try { const raw = JSON.parse(localStorage.getItem(MASTER_CONFIG_KEY)); if(raw && raw.customers && raw.expenses && raw.wages) return raw; } catch(e){} localStorage.setItem(MASTER_CONFIG_KEY, JSON.stringify(DEFAULT_MASTER_CONFIG)); return deepClone(DEFAULT_MASTER_CONFIG); }
+function saveMasterConfig(cfg){ localStorage.setItem(MASTER_CONFIG_KEY, JSON.stringify(cfg)); }
+function getSessionUser(){ try { return JSON.parse(localStorage.getItem(SESSION_KEY)) || {username:'admin', role:'admin'}; } catch(e){ return {username:'admin', role:'admin'}; } }
+if(!localStorage.getItem(SESSION_KEY)) localStorage.setItem(SESSION_KEY, JSON.stringify({username:'admin', role:'admin'}));
+
+const customers = getMasterConfig().customers;
+    let currentCustomer = Object.keys(customers)[0] || "الباشا";
+    let currentProducts = [];
+    let activeTab = 'daily';
+
+    const loginScreen = document.getElementById('loginScreen');
+    const appScreen = document.getElementById('appScreen');
+    const customerSelect = document.getElementById('customerSelect');
+    const phoneInput = document.getElementById('phoneInput');
+    const yearInput = document.getElementById('yearInput');
+    const monthInput = document.getElementById('monthInput');
+    const dayInput = document.getElementById('dayInput');
+    const searchInput = document.getElementById('searchInput');
+    const searchBadge = document.getElementById('searchBadge');
+    const invoiceTitle = document.getElementById('invoiceTitle');
+    const monthlyTitle = document.getElementById('monthlyTitle');
+    const annualTitle = document.getElementById('annualTitle');
+    const dailyRows = document.getElementById('dailyRows');
+    const withdrawTotal = document.getElementById('withdrawTotal');
+    const remainingTotal = document.getElementById('remainingTotal');
+    const paymentInput = document.getElementById('paymentInput');
+    const materialFilter = document.getElementById('materialFilter');
+    const monthlyTable = document.getElementById('monthlyTable');
+    const annualTableWrap = document.getElementById('annualTableWrap');
+    const statusFilterMonthly = document.getElementById('statusFilterMonthly');
+    const statusFilterAnnual = document.getElementById('statusFilterAnnual');
+    const printHeader = document.getElementById('printHeader');
+    const printHeaderSub = document.getElementById('printHeaderSub');
+    const printChipCustomer = document.getElementById('printChipCustomer');
+    const printChipDate = document.getElementById('printChipDate');
+    const printChipTab = document.getElementById('printChipTab');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContent');
+    const modalNote = document.getElementById('modalNote');
+
+    document.getElementById('loginBtn').addEventListener('click', () => {
+      loginScreen.classList.add('hidden');
+      appScreen.classList.remove('hidden');
+    });
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      appScreen.classList.add('hidden');
+      loginScreen.classList.remove('hidden');
+    });
+
+    window.addEventListener('load', () => { window.scrollTo(0,0); });
+
+    function openModal(title, content, note=''){
+      modalTitle.textContent = title;
+      modalContent.textContent = content;
+      modalNote.textContent = note;
+      modal.classList.remove('hidden');
+    }
+    function closeModal(){ modal.classList.add('hidden'); }
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
+
+    function sanitizePhone(raw){
+      const cleaned = (raw || '').replace(/[^\d+]/g,'').trim();
+      if (!cleaned || cleaned === 'غيرمضاف' || cleaned === 'غيرمضاف') return '';
+      if (cleaned.startsWith('+')) return cleaned.replace('+','');
+      if (cleaned.startsWith('00')) return cleaned.slice(2);
+      if (cleaned.startsWith('0')) return '962' + cleaned.slice(1);
+      return cleaned;
+    }
+
+    function setTodayAuto(){
+      const now = new Date();
+      yearInput.value = now.getFullYear();
+      monthInput.value = now.getMonth() + 1;
+      dayInput.value = now.getDate();
+    }
+
+    function fillCustomers(){
+      customerSelect.innerHTML = Object.keys(customers).map(name => `<option>${name}</option>`).join('');
+      customerSelect.value = currentCustomer;
+    }
+
+    function getSearchText(){
+      return (searchInput.value || '').trim();
+    }
+
+    function filteredProducts(){
+      let rows = [...currentProducts];
+      const q = getSearchText();
+      const mat = materialFilter.value;
+
+      if (q){
+        const qLower = q.toLowerCase();
+        const customerMatch = Object.keys(customers).find(name => name.toLowerCase().includes(qLower));
+        if (customerMatch && customerMatch !== currentCustomer){
+          currentCustomer = customerMatch;
+          customerSelect.value = currentCustomer;
+          loadCustomer(false);
+          rows = [...currentProducts];
+        }
+        rows = rows.filter(p => p.name.toLowerCase().includes(qLower) || currentCustomer.toLowerCase().includes(qLower));
+      }
+
+      if (mat && mat !== 'كل المواد'){
+        rows = rows.filter(p => p.name === mat);
+      }
+
+      searchBadge.classList.toggle('hidden', !q);
+      if (q) searchBadge.textContent = `نتائج البحث الحالية: ${q}`;
+      return rows;
+    }
+
+    function syncTitles(){
+      const dateText = `${dayInput.value}/${monthInput.value}/${yearInput.value}`;
+      invoiceTitle.innerHTML = `فاتورة العميل: <span>${currentCustomer}</span> | التاريخ: ${dateText}`;
+      monthlyTitle.innerHTML = `كشف العميل: <span>${currentCustomer}</span> | لشهر: ${monthInput.value}/${yearInput.value}`;
+      annualTitle.innerHTML = `الكشف السنوي: <span>${currentCustomer}</span> - لعام ${yearInput.value}`;
+      const tabTitle = activeTab === 'daily' ? 'فاتورة يومية' : activeTab === 'monthly' ? 'كشف شهري' : 'كشف سنوي';
+      printHeaderSub.textContent = `${tabTitle}`;
+      printChipCustomer.textContent = `العميل: ${currentCustomer}`;
+      printChipDate.textContent = `التاريخ: ${dateText}`;
+      printChipTab.textContent = `النوع: ${tabTitle}`;
+    }
+
+    
+    function salesDateKey(){
+      return `${yearInput.value}-${String(monthInput.value).padStart(2,'0')}-${String(dayInput.value).padStart(2,'0')}`;
+    }
+    function getSalesState(){
+      try { return JSON.parse(localStorage.getItem(SALES_STORAGE_KEY)) || {customers:{}}; }
+      catch(e){ return {customers:{}}; }
+    }
+    function saveSalesState(state){ localStorage.setItem(SALES_STORAGE_KEY, JSON.stringify(state)); }
+    function ensureSalesCustomerDate(customer, dateKey){
+      const state = getSalesState();
+      if(!state.customers[customer]) state.customers[customer] = {phone:(customers[customer]?.phone||'غير مضاف'), dates:{}};
+      if(!state.customers[customer].dates[dateKey]) state.customers[customer].dates[dateKey] = {paid:0, products:{}};
+      (customers[customer]?.products || []).forEach(([name, price])=>{
+        if(!state.customers[customer].dates[dateKey].products[name]) state.customers[customer].dates[dateKey].products[name] = {qty:0, price:+price||0};
+        if(typeof state.customers[customer].dates[dateKey].products[name].qty !== 'number') state.customers[customer].dates[dateKey].products[name].qty = 0;
+        if(typeof state.customers[customer].dates[dateKey].products[name].price !== 'number') state.customers[customer].dates[dateKey].products[name].price = +price||0;
+      });
+      saveSalesState(state);
+      return state;
+    }
+    function saveCurrentSales(){
+      const dateKey = salesDateKey();
+      const state = ensureSalesCustomerDate(currentCustomer, dateKey);
+      const target = state.customers[currentCustomer].dates[dateKey];
+      target.paid = +paymentInput.value || 0;
+      state.customers[currentCustomer].phone = phoneInput.value || 'غير مضاف';
+      currentProducts.forEach(p=>{
+        target.products[p.name] = {qty:+p.qty||0, price:+p.price||0};
+      });
+      saveSalesState(state);
+    }
+    function loadSalesIntoCurrent(){
+      const dateKey = salesDateKey();
+      const state = ensureSalesCustomerDate(currentCustomer, dateKey);
+      const customerState = state.customers[currentCustomer] || {phone:'غير مضاف', dates:{}};
+      const dateState = customerState.dates[dateKey] || {paid:0, products:{}};
+      phoneInput.value = customerState.phone || customers[currentCustomer]?.phone || 'غير مضاف';
+      paymentInput.value = (+dateState.paid || 0).toFixed(2);
+      currentProducts = (customers[currentCustomer]?.products || []).map(([n,p])=>{
+        const saved = dateState.products[n] || {};
+        return {name:n, price:+(saved.price ?? p)||0, qty:+(saved.qty)||0};
+      });
+    }
+    function salesDatesForCustomer(customer, year=null, month=null){
+      const state = getSalesState();
+      const dates = Object.keys(state.customers?.[customer]?.dates || {});
+      return dates.filter(key=>{
+        if(year && !key.startsWith(`${year}-`)) return false;
+        if(month && key.slice(5,7) !== String(month).padStart(2,'0')) return false;
+        return true;
+      });
+    }
+
+    function loadCustomer(fullRender = true){
+      const data = customers[currentCustomer];
+      currentProducts = data.products.map(([n, p]) => ({name:n, price:p, qty:0}));
+      loadSalesIntoCurrent();
+      materialFilter.innerHTML = '<option>كل المواد</option>' + currentProducts.map(p => `<option>${p.name}</option>`).join('');
+      syncTitles();
+      if (fullRender){
+        renderDaily();
+        renderMonthly();
+        renderAnnual();
+      }
+    }
+
+    function selectCustomer(name){
+      currentCustomer = name;
+      customerSelect.value = name;
+      loadCustomer(true);
+    }
+
+    function renderDaily(){
+      const rows = filteredProducts();
+      dailyRows.innerHTML = '';
+
+      rows.forEach((p) => {
+        const idx = currentProducts.findIndex(x => x.name === p.name);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="font-weight:800;font-size:18px">${p.name}</td>
+          <td style="font-size:18px;color:#667992">${p.price.toFixed(2)}</td>
+          <td><input class="qty-input" type="number" min="0" step="1" value="${currentProducts[idx].qty || 0}" data-index="${idx}" /></td>
+          <td style="font-weight:900;font-size:18px">${((currentProducts[idx].qty || 0) * p.price).toFixed(2)}</td>
+        `;
+        dailyRows.appendChild(tr);
+      });
+
+      document.querySelectorAll('.qty-input').forEach(input => {
+        input.addEventListener('input', e => {
+          const i = +e.target.dataset.index;
+          currentProducts[i].qty = +e.target.value || 0;
+          saveCurrentSales();
+          recalc();
+          renderMonthly();
+          renderAnnual();
+        });
+      });
+
+      recalc();
+    }
+
+    function currentFilteredState(){
+      const rows = filteredProducts();
+      const paid = +paymentInput.value || 0;
+      let total = 0;
+      let qtyTotal = 0;
+      let lines = [];
+      rows.forEach(p => {
+        const real = currentProducts.find(x => x.name === p.name);
+        const qty = real.qty || 0;
+        const value = qty * real.price;
+        total += value;
+        qtyTotal += qty;
+        lines.push({name:p.name, price:p.price, qty, value});
+      });
+      return {rows, paid, total, qtyTotal, balance: total - paid, lines};
+    }
+
+    function recalc(){
+      document.querySelectorAll('.qty-input').forEach(input => {
+        const i = +input.dataset.index;
+        const rowTotal = (currentProducts[i].qty || 0) * currentProducts[i].price;
+        input.closest('tr').children[3].textContent = rowTotal.toFixed(2);
+      });
+
+      const state = currentFilteredState();
+      withdrawTotal.textContent = state.total.toFixed(2);
+      remainingTotal.textContent = state.balance.toFixed(2) + ' دينار';
+    }
+
+    function renderMonthly(){
+      const state = currentFilteredState();
+      const mode = statusFilterMonthly ? statusFilterMonthly.value : 'أيام بها حركة';
+      const heads = state.rows.map(p => `<th>${p.name}<div style="font-size:14px;font-weight:400">(${p.price})</div></th>`).join('');
+      const qtyCells = state.rows.map(p => {
+        const real = currentProducts.find(x => x.name === p.name);
+        return `<td>${real.qty || 0}</td>`;
+      }).join('');
+      const valueCells = state.rows.map(p => {
+        const real = currentProducts.find(x => x.name === p.name);
+        return `<td>${(((real.qty || 0) * real.price)).toFixed(2)}</td>`;
+      }).join('');
+
+      let helperText = '';
+      const activeLines = state.lines.filter(x => x.qty > 0);
+      if (activeLines.length){
+        const topMaterial = [...activeLines].sort((a,b)=>b.value-a.value)[0];
+        const lowMaterial = [...activeLines].sort((a,b)=>a.value-b.value)[0];
+        if (mode === 'أعلى مادة') helperText = `أعلى مادة حاليًا: ${topMaterial.name} بقيمة ${topMaterial.value.toFixed(2)} د`;
+        else if (mode === 'أقل مادة') helperText = `أقل مادة حاليًا: ${lowMaterial.name} بقيمة ${lowMaterial.value.toFixed(2)} د`;
+        else if (mode === 'أعلى يوم' || mode === 'أعلى بيع') helperText = `أعلى يوم/بيع حاليًا هو يوم ${dayInput.value} بقيمة ${state.total.toFixed(2)} د`;
+        else if (mode === 'أقل يوم' || mode === 'أقل بيع') helperText = `أقل يوم/بيع حاليًا هو يوم ${dayInput.value} بقيمة ${state.total.toFixed(2)} د`;
+        else if (mode === 'كل الأيام') helperText = `يعرض كل الأيام المتاحة ضمن الشهر الحالي.`;
+        else helperText = `يعرض أيام بها حركة فقط ضمن الشهر الحالي.`;
+      } else {
+        helperText = mode === 'كل الأيام' ? 'يعرض كل الأيام حتى لو لا توجد حركة.' : 'لا توجد حركة ضمن الفلاتر الحالية.';
+      }
+
+      monthlyTable.innerHTML = `
+        <thead>
+          <tr>
+            <th>اليوم</th>
+            ${heads}
+            <th style="background:#f6eebf">إجمالي المسحوبات</th>
+            <th style="background:#daf2dd">الدفعة</th>
+            <th>الرصيد</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>${dayInput.value}</td>
+            ${qtyCells}
+            <td>${state.total.toFixed(2)}</td>
+            <td>${state.paid.toFixed(2)}</td>
+            <td>${state.balance.toFixed(2)}</td>
+          </tr>
+          <tr style="background:#fafcff">
+            <td style="font-weight:900">قيمة كل مادة</td>
+            ${valueCells}
+            <td style="font-weight:900;color:#c66c00">${state.total.toFixed(2)}</td>
+            <td style="font-weight:900;color:#16a34a">${state.paid.toFixed(2)}</td>
+            <td style="font-weight:900">${state.balance.toFixed(2)}</td>
+          </tr>
+          <tr style="background:#fff8df">
+            <td colspan="${state.rows.length + 4}" style="font-weight:900;color:#7b5b00">${helperText}</td>
+          </tr>
+          <tr style="background:#1d2b47;color:#fff;font-weight:900">
+            <td>المجموع</td>
+            ${qtyCells}
+            <td style="color:#ffb320">${state.total.toFixed(2)}</td>
+            <td style="color:#2fe16d">${state.paid.toFixed(2)}</td>
+            <td>${state.balance.toFixed(2)}</td>
+          </tr>
+        </tbody>
+      `;
+
+      document.getElementById('monthlySales').textContent = state.total.toFixed(2);
+      document.getElementById('monthlyPaid').textContent = state.paid.toFixed(2);
+      document.getElementById('monthlyBalance').textContent = state.balance.toFixed(2);
+    }
+
+    function renderAnnual(){
+      const state = currentFilteredState();
+      const mode = statusFilterAnnual ? statusFilterAnnual.value : 'كل الأشهر';
+      let body = '';
+      let yearlyRows = [];
+      for (let m = 1; m <= 12; m++){
+        const msales = (m === +monthInput.value) ? state.total : 0;
+        const mpaid = (m === +monthInput.value) ? state.paid : 0;
+        const rem = msales - mpaid;
+        yearlyRows.push({month:m, sales:msales, paid:mpaid, rem});
+      }
+
+      let shownRows = yearlyRows;
+      if (mode === 'أشهر بها حركة') shownRows = yearlyRows.filter(r => r.sales > 0 || r.paid > 0);
+      if (mode === 'أعلى شهر' || mode === 'أعلى بيع') shownRows = [yearlyRows.reduce((a,b)=> a.sales >= b.sales ? a : b)];
+      if (mode === 'أقل شهر' || mode === 'أقل بيع') shownRows = [yearlyRows.reduce((a,b)=> a.sales <= b.sales ? a : b)];
+
+      shownRows.forEach(r => {
+        body += `<tr><td>شهر ${r.month}</td><td style="color:#c66c00">${r.sales.toFixed(2)}</td><td style="color:#16a34a">${r.paid.toFixed(2)}</td><td>${r.rem.toFixed(2)}</td></tr>`;
+      });
+
+      let helperText = '';
+      const activeLines = state.lines.filter(x => x.qty > 0);
+      if (activeLines.length){
+        const topMaterial = [...activeLines].sort((a,b)=>b.value-a.value)[0];
+        const lowMaterial = [...activeLines].sort((a,b)=>a.value-b.value)[0];
+        if (mode === 'أعلى مادة') helperText = `أعلى مادة سنويًا ضمن البيانات الحالية: ${topMaterial.name} بقيمة ${topMaterial.value.toFixed(2)} د`;
+        else if (mode === 'أقل مادة') helperText = `أقل مادة سنويًا ضمن البيانات الحالية: ${lowMaterial.name} بقيمة ${lowMaterial.value.toFixed(2)} د`;
+        else if (mode === 'كل الأشهر') helperText = 'يعرض جميع الأشهر من 1 إلى 12.';
+        else if (mode === 'أشهر بها حركة') helperText = 'يعرض الأشهر التي تحتوي على حركة فقط.';
+        else helperText = `تم تطبيق فلتر: ${mode}`;
+      } else {
+        helperText = `تم تطبيق فلتر: ${mode}`;
+      }
+
+      annualTableWrap.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>الشهر</th>
+              <th>إجمالي المسحوبات</th>
+              <th style="color:#138b37">إجمالي الدفعات</th>
+              <th>الرصيد المتبقي</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${body || `<tr><td colspan="4">لا توجد نتائج ضمن الفلاتر الحالية.</td></tr>`}
+            <tr style="background:#fff8df"><td colspan="4" style="font-weight:900;color:#7b5b00">${helperText}</td></tr>
+            <tr class="annual-total">
+              <td>المجموع السنوي:</td>
+              <td class="orange-text">${state.total.toFixed(2)}</td>
+              <td class="green-text">${state.paid.toFixed(2)}</td>
+              <td>${state.balance.toFixed(2)}</td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    function doPrint(){
+      syncTitles();
+      printHeader.classList.remove('hidden');
+      // show only the relevant print header, keeping current tab context
+      window.print();
+      setTimeout(()=>printHeader.classList.add('hidden'), 300);
+    }
+
+    function buildMiniAnalysis(){
+      const s = currentFilteredState();
+      const activeLines = s.lines.filter(x => x.qty > 0);
+      if (!activeLines.length){
+        return `لا توجد حركة مدخلة حاليًا للعميل ${currentCustomer} في ${dayInput.value}/${monthInput.value}/${yearInput.value}.`;
+      }
+      const topValue = [...activeLines].sort((a,b)=>b.value-a.value)[0];
+      const topQty = [...activeLines].sort((a,b)=>b.qty-a.qty)[0];
+      const avg = activeLines.length ? (s.total / activeLines.length) : 0;
+      const lines = activeLines.map((x, i) => `${i+1}. ${x.name}: كمية ${x.qty} | قيمة ${x.value.toFixed(2)} د`).join('\n');
+      return [
+        `تحليل مختصر للعميل: ${currentCustomer}`,
+        `التاريخ: ${dayInput.value}/${monthInput.value}/${yearInput.value}`,
+        ``,
+        `عدد المواد التي بها حركة: ${activeLines.length}`,
+        `إجمالي الكمية المسحوبة: ${s.qtyTotal}`,
+        `إجمالي المبيعات: ${s.total.toFixed(2)} دينار`,
+        `إجمالي الدفعة: ${s.paid.toFixed(2)} دينار`,
+        `الرصيد المتبقي: ${s.balance.toFixed(2)} دينار`,
+        `متوسط قيمة المادة المتحركة: ${avg.toFixed(2)} دينار`,
+        `أعلى مادة من حيث القيمة: ${topValue.name} بقيمة ${topValue.value.toFixed(2)} دينار`,
+        `أعلى مادة من حيث الكمية: ${topQty.name} بكمية ${topQty.qty}`,
+        ``,
+        `تفصيل الحركة:`,
+        lines
+      ].join('\n');
+    }
+
+    function buildMonthlyMessage(){
+      const s = currentFilteredState();
+      const activeLines = s.lines.filter(x => x.qty > 0);
+      let items = activeLines.length
+        ? activeLines.map(x => `- ${x.name}: الكمية ${x.qty} | القيمة ${x.value.toFixed(2)} د`).join('\n')
+        : 'لا توجد مواد بحركة حتى الآن.';
+      return [
+        `السلام عليكم،`,
+        `هذا كشف العميل ${currentCustomer}`,
+        `لشهر ${monthInput.value}/${yearInput.value}`,
+        `التاريخ الحالي: ${dayInput.value}/${monthInput.value}/${yearInput.value}`,
+        ``,
+        items,
+        ``,
+        `إجمالي المبيعات: ${s.total.toFixed(2)} دينار`,
+        `الدفعة المقبوضة: ${s.paid.toFixed(2)} دينار`,
+        `الرصيد المتبقي: ${s.balance.toFixed(2)} دينار`
+      ].join('\n');
+    }
+
+    function buildYearMessage(){
+      const s = currentFilteredState();
+      return [
+        `السلام عليكم،`,
+        `هذا الكشف السنوي للعميل ${currentCustomer}`,
+        `لعام ${yearInput.value}`,
+        ``,
+        `إجمالي المسحوبات المسجلة: ${s.total.toFixed(2)} دينار`,
+        `إجمالي الدفعات المسجلة: ${s.paid.toFixed(2)} دينار`,
+        `الرصيد المتبقي: ${s.balance.toFixed(2)} دينار`
+      ].join('\n');
+    }
+
+    function whatsappOpen(message){
+      const phone = sanitizePhone(phoneInput.value);
+      if (!phone){
+        openModal('رقم الهاتف مطلوب', 'لا يمكن فتح واتساب لأن رقم الهاتف غير مُدخل لهذا العميل.', 'أدخل رقم الهاتف أولًا في خانة الهاتف والواتساب.');
+        return;
+      }
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+      openModal(
+        'تم تجهيز كشف واتساب',
+        message,
+        'مهم: هذه النسخة تعمل كملف HTML فقط، لذلك لا تستطيع رفع PDF تلقائيًا إلى واتساب من داخل النظام بدون خادم أو API. لكن تم تجهيز كشف منظم للطباعة/الحفظ PDF، ثم يمكنك إرساله يدويًا عبر واتساب.'
+      );
+    }
+
+    customerSelect.addEventListener('change', e => { saveCurrentSales(); selectCustomer(e.target.value); });
+    phoneInput.addEventListener('input', () => { saveCurrentSales(); });
+    searchInput.addEventListener('input', () => { renderDaily(); renderMonthly(); renderAnnual(); syncTitles(); });
+    materialFilter.addEventListener('change', () => { renderDaily(); renderMonthly(); renderAnnual(); });
+    [yearInput, monthInput, dayInput].forEach(el => el.addEventListener('input', () => { saveCurrentSales(); loadCustomer(true); }));
+    paymentInput.addEventListener('input', () => { saveCurrentSales(); recalc(); renderMonthly(); renderAnnual(); });
+    if (statusFilterMonthly) statusFilterMonthly.addEventListener('change', () => renderMonthly());
+    if (statusFilterAnnual) statusFilterAnnual.addEventListener('change', () => renderAnnual());
+
+    document.getElementById('printPageBtn').addEventListener('click', doPrint);
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('js-print')) doPrint();
+    });
+
+    document.getElementById('btnMiniAnalysis').addEventListener('click', ()=>{
+      openModal('تحليل مختصر', buildMiniAnalysis(), 'يمكن أيضًا طباعة هذا التحليل من الصفحة الحالية بتنسيق أكثر ترتيبًا.');
+    });
+    document.getElementById('btnWhatsappCompose').addEventListener('click', ()=>{
+      openModal('صياغة واتساب', buildMonthlyMessage(), 'هذه صياغة جاهزة ومنظمة. لإرسالها كملف PDF فعليًا: افتح الطباعة ثم اختر حفظ كـ PDF وبعدها أرفقه يدويًا في واتساب.');
+    });
+    document.getElementById('btnCustomMessage').addEventListener('click', ()=>{
+      const s = currentFilteredState();
+      const msg = `السلام عليكم، هذا إشعار مخصص للعميل ${currentCustomer} بتاريخ ${dayInput.value}/${monthInput.value}/${yearInput.value}. إجمالي المبيعات ${s.total.toFixed(2)} دينار، المدفوع ${s.paid.toFixed(2)} دينار، والمتبقي ${s.balance.toFixed(2)} دينار.`;
+      whatsappOpen(msg);
+    });
+    document.getElementById('btnWhatsappStatement').addEventListener('click', ()=>{
+      whatsappOpen(buildMonthlyMessage());
+    });
+    document.getElementById('btnYearStatement').addEventListener('click', ()=>{
+      whatsappOpen(buildYearMessage());
+    });
+
+    document.querySelectorAll('.section-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.section-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeTab = btn.dataset.tab;
+        document.getElementById('dailyTab').classList.toggle('hidden', activeTab !== 'daily');
+        document.getElementById('monthlyTab').classList.toggle('hidden', activeTab !== 'monthly');
+        document.getElementById('annualTab').classList.toggle('hidden', activeTab !== 'annual');
+        syncTitles();
+      });
+    });
+
+    setTodayAuto();
+    fillCustomers();
+    if (statusFilterAnnual) statusFilterAnnual.value = 'كل الأشهر';
+    selectCustomer(currentCustomer);
+  </script>
+</body>
+</html>

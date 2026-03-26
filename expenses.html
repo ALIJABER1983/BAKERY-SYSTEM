@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>نظام إدارة مشغل المهندس للمخبوزات - المصاريف والعمال</title>
+<style>
+:root{
+  --navy:#1d2b47; --navy-soft:#304668; --bg:#edf2f7; --card:#fff; --line:#d7e0ea;
+  --text:#17304f; --orange:#f2a20b; --orange-dark:#c97900; --soft-orange:#fbf7e7;
+  --green:#179c45; --mint:#eefaf1; --lav:#eef1ff; --purple:#4b4fe8; --shadow:0 12px 30px rgba(14,26,44,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:"Cairo","Tajawal","Segoe UI",Tahoma,Arial,sans-serif;color:var(--text)}
+.hidden{display:none!important}
+.topbar{display:none!important}
+.top-inner{max-width:1500px;margin:0 auto}
+.top-row{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.title-wrap{display:flex;align-items:center;gap:14px;color:#ffb320;font-size:30px;font-weight:900}
+.left-tools{display:flex;gap:10px;align-items:center}
+.pill-btn{background:var(--navy-soft);color:#fff;border:none;border-radius:12px;height:44px;padding:0 18px;font-size:16px;font-weight:800}
+.tabs{display:flex;gap:10px;align-items:flex-end;overflow:auto;padding:8px 0 0}
+.main-tab{background:var(--navy-soft);color:#dfe8f5;border:none;height:54px;padding:0 28px;font-size:18px;font-weight:800;white-space:nowrap;border-radius:16px 16px 0 0}
+.main-tab.active{background:var(--orange);color:#1b2436}
+.page{max-width:1500px;margin:0 auto 24px;padding:0 18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 2px 0 rgba(255,255,255,.8) inset}
+.filters{padding:14px 18px 18px;margin-top:16px}
+.filters-grid{display:grid;grid-template-columns:1.7fr 1fr .7fr .7fr .7fr;gap:14px;align-items:end}
+.label{display:block;margin-bottom:8px;font-size:18px;font-weight:800;color:#445b79}
+.input, select{width:100%;height:56px;border:2px solid #dbe3ee;border-radius:14px;background:#fff;padding:0 16px;font-size:18px;color:var(--text)}
+.input:focus, select:focus{outline:none;border-color:var(--orange)}
+.print-main{background:var(--navy);color:#fff;height:46px;border:none;border-radius:12px;padding:0 22px;font-size:18px;font-weight:900}
+.section-card{margin-top:14px;overflow:hidden}
+.section-tabs{display:flex;border-bottom:1px solid var(--line);background:#fff}
+.section-tab{padding:18px 28px;border:none;background:#fff;font-size:18px;font-weight:800;color:#556a86;border-left:1px solid var(--line)}
+.section-tab.active{color:#4a47ff;box-shadow:inset 0 -3px 0 #4a47ff}
+.view-head{padding:18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.view-title{font-size:20px;font-weight:900}
+.print-btn{background:#dde5f0;color:#203552;height:42px;border:none;border-radius:10px;padding:0 18px;font-size:18px;font-weight:900}
+.daily-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;padding:16px 18px}
+.panel{border-radius:20px;overflow:hidden;border:1px solid var(--line);background:#fff}
+.panel-head{padding:14px 18px;font-size:18px;font-weight:900;border-bottom:1px solid var(--line)}
+.panel-head.orange{background:var(--soft-orange);color:var(--orange-dark)}
+.panel-head.green{background:#effbf2;color:#16853d}
+.panel-head.lav{background:#eef1ff;color:#4b4fe8}
+.panel-body{max-height:520px;overflow:auto}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 18px;border-bottom:1px solid #e7edf5}
+.row .name{font-size:17px;font-weight:800;min-width:140px;text-align:right}
+.money{font-size:16px;color:#6a7d94;min-width:46px;text-align:center}
+.money-input{width:122px;height:42px;border:2px solid #d7deea;border-radius:10px;text-align:center;font-size:18px;color:#7c8da3;background:#fff}
+.left-pack{display:flex;align-items:center;gap:10px;min-width:180px;justify-content:flex-start;direction:ltr}
+.purchase-note{padding:56px 12px;color:#8a97aa;text-align:center;font-size:18px}
+.totals-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;padding:0 18px 18px}
+.total-box{border-radius:18px;padding:18px;text-align:center;border:1px solid var(--line);background:#fff}
+.total-box strong{display:block;font-size:18px;color:#7a8ca1;margin-bottom:8px}
+.total-box .num{font-size:22px;font-weight:900}
+.total-box.navy{background:var(--navy);color:#fff}.total-box.navy strong,.total-box.navy .num{color:#fff}
+.total-box.orange{background:var(--soft-orange)} .total-box.orange .num{color:var(--orange-dark)}
+.total-box.green{background:var(--mint)} .total-box.green .num{color:var(--green)}
+.total-box.lav{background:var(--lav)} .total-box.lav .num{color:#4b4fe8}
+.toolbar{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.toolbar .btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{height:42px;border:none;border-radius:10px;padding:0 16px;font-size:18px;font-weight:900}
+.btn.navy{background:var(--navy);color:#fff}.btn.white{background:#dde5f0;color:#203552}
+.filter-line{display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr 1fr 1fr;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.statline{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;padding:0 18px 16px}
+.mini-box{border:1px solid var(--line);border-radius:14px;padding:14px 18px;background:#fff;text-align:center}
+.mini-box strong{display:block;color:#8796a8;font-size:18px;margin-bottom:10px}.mini-box .num{font-size:24px;font-weight:900}
+.mini-box.orange .num{color:var(--orange-dark)} .mini-box.green .num{color:var(--green)} .mini-box.lav .num{color:#4b4fe8}
+.table-wrap{padding:0 0 16px;overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:1200px}
+th,td{padding:14px 12px;border-bottom:1px solid #e5ebf4;text-align:center;font-size:16px;white-space:nowrap}
+thead th{background:#edf2f8;color:#37506d;font-size:18px}
+tfoot td{background:var(--navy);color:#fff;font-weight:900}
+tfoot td.orange{color:#ffb320} tfoot td.green{color:#31e36d} tfoot td.lav{color:#9aa6ff}
+.helper{padding:10px 18px 0;color:#7c8b9c;font-size:15px}
+.print-header{display:none}
+@page{size:A4;margin:12mm}
+@media print{
+  body{background:#fff}
+  .topbar,.filters,.section-tabs,.toolbar,.filter-line,.helper,.print-btn,.print-main{display:none!important}
+  .page{max-width:none;margin:0;padding:0}
+  .card,.panel,.total-box,.mini-box{border:none;box-shadow:none}
+  .print-header{display:block!important;position:relative;overflow:hidden;border:3px solid #1d2b47;border-radius:18px;padding:18px 22px 16px;margin:0 0 16px 0;
+    background:radial-gradient(circle at 12% 28%, rgba(255,255,255,.28), transparent 18%),radial-gradient(circle at 88% 24%, rgba(255,255,255,.20), transparent 16%),linear-gradient(135deg,#1d2b47 0%,#23375d 38%,#f2a20b 100%);color:#fff}
+  .print-header h1{margin:0;color:#fff;font-size:28px;font-weight:900}
+  .print-header .sub{margin-top:8px;font-size:15px;color:#eef4ff;font-weight:700}
+  .print-header .meta{margin-top:10px;display:flex;gap:12px;flex-wrap:wrap}
+  .print-header .chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);padding:6px 10px;border-radius:999px;font-size:14px;font-weight:800}
+  .print-header:before{content:"🥖  🍞  🥐";position:absolute;left:22px;top:14px;font-size:22px;opacity:.95}
+  .print-header:after{content:"🧁  🥯  🍞";position:absolute;left:22px;bottom:12px;font-size:20px;opacity:.88}
+}
+@media (max-width:1200px){
+  .filters-grid{grid-template-columns:repeat(3,1fr)}
+  .daily-grid{grid-template-columns:1fr}
+  .totals-grid,.statline{grid-template-columns:repeat(2,1fr)}
+  .filter-line{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:760px){
+  .filters-grid,.totals-grid,.statline,.filter-line{grid-template-columns:1fr}
+  .row .name{min-width:auto}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="top-inner">
+    <div class="top-row">
+      <div class="title-wrap"><span>🕘</span> نظام إدارة مشغل المهندس للمخبوزات</div>
+      <div class="left-tools">
+        <button class="pill-btn">المدير - admin 🛡</button>
+        <button class="pill-btn">خروج ⎋</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="main-tab">العملاء والمبيعات 👥</button>
+      <button class="main-tab active">المصاريف والعمال 🎁</button>
+      <button class="main-tab">احتساب أجور العمال 🧾</button>
+      <button class="main-tab">التحليل العام ◔</button>
+      <button class="main-tab">الإعدادات العامة ⚙</button>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="print-header" id="printHeader">
+    <h1>نظام إدارة مشغل المهندس للمخبوزات</h1>
+    <div class="sub" id="printHeaderSub">كشف</div>
+    <div class="meta">
+      <span class="chip" id="printChipDate">التاريخ: -</span>
+      <span class="chip" id="printChipTab">النوع: -</span>
+      <span class="chip" id="printChipMonth">الفترة: -</span>
+    </div>
+  </div>
+
+  <section class="card filters">
+    <div class="filters-grid">
+      <div>
+        <label class="label">بحث</label>
+        <input id="searchInput" class="input" placeholder="ابحث باسم البند أو العامل..." />
+      </div>
+      <div>
+        <label class="label">السنة</label>
+        <input id="yearInput" class="input" type="number" />
+      </div>
+      <div>
+        <label class="label">الشهر</label>
+        <input id="monthInput" class="input" type="number" min="1" max="12" />
+      </div>
+      <div>
+        <label class="label">اليوم</label>
+        <input id="dayInput" class="input" type="number" min="1" max="31" />
+      </div>
+      <div style="align-self:end"><button id="printPageBtn" class="print-main">طباعة الصفحة الحالية 🖨</button></div>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <div class="section-tabs">
+      <button class="section-tab active" data-tab="daily">يومية المصاريف</button>
+      <button class="section-tab" data-tab="monthly">تجميع شهري</button>
+      <button class="section-tab" data-tab="annual">تجميع سنوي</button>
+    </div>
+
+    <div id="dailyView">
+      <div class="view-head">
+        <div class="view-title">إدخال المصاريف والعمال لتاريخ <span id="dailyDateLabel"></span></div>
+        <button class="print-btn js-print">طباعة 🖨</button>
+      </div>
+      <div class="daily-grid">
+        <div class="panel">
+          <div class="panel-head lav">المصاريف العامة 🎁</div>
+          <div class="panel-body" id="generalBody"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head green">يوميات ورواتب العمال 👥</div>
+          <div class="panel-body" id="workersBody"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head orange">مشتريات البضاعة الخارجية 💼</div>
+          <div class="panel-body" id="purchaseBody"></div>
+        </div>
+      </div>
+      <div class="totals-grid">
+        <div class="total-box navy"><strong>إجمالي اليوم</strong><div id="dayGrand" class="num">0.00</div></div>
+        <div class="total-box orange"><strong>مشتريات البضاعة الخارجية</strong><div id="purchaseTotal" class="num">0.00</div></div>
+        <div class="total-box green"><strong>يوميات ورواتب العمال</strong><div id="workerTotal" class="num">0.00</div></div>
+        <div class="total-box lav"><strong>المصاريف العامة</strong><div id="generalTotal" class="num">0.00</div></div>
+      </div>
+    </div>
+
+    <div id="monthlyView" class="hidden">
+      <div class="toolbar">
+        <div class="view-title">كشف المصاريف والعمال لشهر: <span id="monthlyTitle"></span></div>
+        <div class="btns">
+          <button class="btn white js-print">طباعة 🖨</button>
+          <button class="btn navy">إكسل ⤓</button>
+        </div>
+      </div>
+      <div class="filter-line">
+        <div><label class="label">فلترة حسب الأقسام</label><select id="sectionFilterMonth"><option>كل الأقسام</option><option>المصاريف العامة</option><option>يوميات ورواتب العمال</option><option>مشتريات البضاعة الخارجية</option></select></div>
+        <div><label class="label">فلترة حسب البند</label><select id="itemFilterMonth"><option>كل البنود</option></select></div>
+        <div><label class="label">الحالة</label><select id="statusFilterMonth"><option>أيام بها حركة</option><option>كل الأيام</option><option>أعلى مادة</option><option>أقل مادة</option><option>أعلى يوم</option><option>أقل يوم</option><option>أعلى بيع</option><option>أقل بيع</option></select></div>
+        <div><label class="label">أقل مبلغ</label><input id="minAmountMonth" class="input" value="0" /></div>
+        <div><label class="label">من يوم</label><input id="fromDay" class="input" value="1" /></div>
+        <div><label class="label">إلى يوم</label><input id="toDay" class="input" value="31" /></div>
+      </div>
+      <div class="statline">
+        <div class="mini-box"><strong>الإجمالي</strong><div id="monthlyGrand" class="num">0.00</div></div>
+        <div class="mini-box orange"><strong>مشتريات البضاعة الخارجية</strong><div id="monthlyPurchases" class="num">0.00</div></div>
+        <div class="mini-box green"><strong>يوميات ورواتب العمال</strong><div id="monthlyWorkers" class="num">0.00</div></div>
+        <div class="mini-box lav"><strong>المصاريف العامة</strong><div id="monthlyGeneral" class="num">0.00</div></div>
+      </div>
+      <div class="helper" id="monthHelper"></div>
+      <div class="table-wrap"><table id="monthlyTable"></table></div>
+    </div>
+
+    <div id="annualView" class="hidden">
+      <div class="toolbar">
+        <div class="view-title">التجميع السنوي للمصاريف لعام <span id="annualTitle"></span></div>
+        <div class="btns"><button class="btn white js-print">طباعة 🖨</button></div>
+      </div>
+      <div class="filter-line">
+        <div><label class="label">فلترة حسب الأقسام</label><select id="sectionFilterAnnual"><option>كل الأقسام</option><option>المصاريف العامة</option><option>يوميات ورواتب العمال</option><option>مشتريات البضاعة الخارجية</option></select></div>
+        <div><label class="label">فلترة حسب البند</label><select id="itemFilterAnnual"><option>كل البنود</option></select></div>
+        <div><label class="label">الحالة</label><select id="statusFilterAnnual"><option>كل الأشهر</option><option>أشهر بها حركة</option><option>أعلى شهر</option><option>أقل شهر</option><option>أعلى بيع</option><option>أقل بيع</option><option>أعلى مادة</option><option>أقل مادة</option></select></div>
+        <div><label class="label">أقل مبلغ</label><input id="minAmountAnnual" class="input" value="0" /></div>
+        <div><label class="label">من شهر</label><input id="fromMonth" class="input" value="1" /></div>
+        <div><label class="label">إلى شهر</label><input id="toMonth" class="input" value="12" /></div>
+      </div>
+      <div class="statline">
+        <div class="mini-box navy" style="background:var(--navy);color:#fff"><strong style="color:#fff">الإجمالي</strong><div id="annualGrand" class="num" style="color:#fff">0.00</div></div>
+        <div class="mini-box orange"><strong>مشتريات البضاعة الخارجية</strong><div id="annualPurchases" class="num">0.00</div></div>
+        <div class="mini-box green"><strong>يوميات ورواتب العمال</strong><div id="annualWorkers" class="num">0.00</div></div>
+        <div class="mini-box lav"><strong>المصاريف العامة</strong><div id="annualGeneral" class="num">0.00</div></div>
+      </div>
+      <div class="helper" id="annualHelper"></div>
+      <div class="table-wrap"><table id="annualTable"></table></div>
+    </div>
+  </section>
+</main>
+
+<script>
+
+const MASTER_CONFIG_KEY='bakery_master_config_v1';
+const SESSION_KEY='bakery_session_v1';
+const DEFAULT_MASTER_CONFIG = {"bakeryName": "مشغل المهندس للمخبوزات", "customers": {"الباشا": {"phone": "غير مضاف", "products": [["عربي", 1.6], ["لف", 1.1], ["فرنسي", 0.1], ["برجر", 0.11], ["صمون", 0.15], ["إيطالي", 0.15]]}, "شاورما مول": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["ارباع", 1.0], ["مدور", 0.1], ["خبز جواد", 0.6]]}, "حجر وصاج": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["لف", 1.0]]}, "غيث": {"phone": "غير مضاف", "products": [["عربي", 1.6], ["لف", 1.1], ["مدور", 0.08]]}, "شهبندر الاذاعة": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["ارباع", 1.0], ["فرنسي", 0.1], ["إيطالي", 0.2], ["برجر", 0.1], ["بروستد كيس", 0.45], ["خبز لب", 0.6], ["تورتيلا كبير  او صغير", 1.5]]}, "شهبندر المدينه": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["ارباع", 1.0], ["فرنسي", 0.1], ["إيطالي", 0.2], ["برجر", 0.1], ["بروستد كيس", 0.45], ["خبز لب", 0.6], ["تورتيلا كبير  او صغير", 1.5]]}, "ابو كف": {"phone": "غير مضاف", "products": [["عربي", 1.6], ["لف", 1.1], ["فرنسي", 0.1], ["برجر", 0.11]]}, "ابو مويس ابو نصير": {"phone": "غير مضاف", "products": [["عربي", 1.4], ["لف", 0.9], ["صمون", 0.11], ["لبناني", 0.6]]}, "ابو مويس طبربور": {"phone": "غير مضاف", "products": [["عربي", 1.4], ["لف", 0.9], ["صمون", 0.11], ["لبناني", 0.6]]}, "ابو مويس الزرقاء": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["لف", 1.0], ["صمون", 0.11], ["لبناني", 0.6]]}, "انوار القدس": {"phone": "غير مضاف", "products": [["مطبق", 1.6], ["لف", 1.1], ["مدور", 0.08], ["فرنسي", 0.1], ["برجر", 0.11], ["إيطالي", 0.2]]}, "ريم خريبة السوق": {"phone": "غير مضاف", "products": [["عربي", 1.6], ["لف", 0.9]]}, "ريم الاذاعة": {"phone": "غير مضاف", "products": [["عربي", 1.4], ["لف", 0.9], ["صمون", 0.11], ["كعك", 0.09], ["خبز لبناني", 0.625]]}, "شي شاورما السابع": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["برايز", 0.06], ["إيطالي", 0.15], ["لبناني", 0.7]]}, "شي شاورما الرابية": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["برايز", 0.06], ["إيطالي", 0.15], ["لبناني", 0.7]]}, "شي شاورما مرج الحمام": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["برايز", 0.06], ["إيطالي", 0.15], ["لبناني", 0.7]]}, "شي شاورما الرينبو": {"phone": "غير مضاف", "products": [["عربي", 1.5], ["برايز", 0.06], ["إيطالي", 0.15], ["لبناني", 0.7]]}, "القاهرة": {"phone": "غير مضاف", "products": [["عربي", 1.4], ["لف", 0.9]]}, "ملحمة المرج": {"phone": "غير مضاف", "products": [["عربي", 1.5]]}, "مخبز الصديق": {"phone": "غير مضاف", "products": [["مدور", 0.08]]}, "ملحمة الحرمين": {"phone": "غير مضاف", "products": [["مطبق", 2.0]]}, "ملحمة الحصري": {"phone": "غير مضاف", "products": [["مطبق", 1.8]]}, "الاعتماد": {"phone": "غير مضاف", "products": [["مدور", 0.07]]}, "فروجنا مكة": {"phone": "غير مضاف", "products": [["مدور", 0.85]]}, "ملحمة اللويبدة": {"phone": "غير مضاف", "products": [["ربطة", 3.75]]}, "مطعم فرخة": {"phone": "غير مضاف", "products": [["عربي", 1.4], ["لف", 1.0], ["مدور", 0.08], ["فرنسي", 0.1], ["برجر", 0.11], ["إيطالي", 0.2], ["لبناني", 0.5]]}, "هيا الحسين": {"phone": "غير مضاف", "products": [["عربي", 1.4], ["ارباع", 0.95], ["ايطالي", 0.17], ["فرنسي", 0.1], ["برغر", 0.1], ["البروستد الربطه", 0.45]]}}, "expenses": {"general": ["غاز", "طحين", "محروقات", "صيانة", "أكياس ومواد تغليف", "زيت", "خس", "لزيق", "عدة مشغل", "ديزل ايمن شتيله", "ديزل ايمن حصوة"], "workers": ["ايمن حصوه", "عجين ابو محمد", "عجين عماد", "محمود الصعيدي", "طارق", "شمس", "حاتم", "محمد فرع", "احمد جمال", "سيطره", "سعيد", "احمد شوقي", "جمعه", "محمود الطفيلي", "احمد الطفيلي", "مصطفى الصعيدي", "زيد", "عبد الهادي", "عماد", "عدي", "المغربي", "ابو محمد", "علي", "اوشا", "ممدوح", "فليكس", "ايهاب", "قاسم", "عمران"], "purchases": ["خبز افرنجي", "فرنسي", "برجر", "ايطالي كبير", "ايطالي صغير", "كعك", "حمام", "صمون", "خبز الطباخي", "خبز برايز", "برجر جواد", "خبز جواد"]}, "wages": {"categories": [{"id": "bashkara", "name": "عمال البشكرة", "note": "مأخوذ من الشيت المرفق: حساب عمال البشكرة 600 عالفرش", "rate": 0.6, "rateLabel": "الأجرة: 0.6 دينار / فرش", "unit": "فرش", "workers": ["محمود الصعيدي", "طارق", "شمس", "حاتم", "محمد فزاع", "احمد جمال", "سيطره", "سعيد", "احمد شوقي", "جمعه", "محمود الطفيلي", "احمد الطفيلي", "مصطفى الصعيدي", "زيد", "عبد الهادي", "عماد", "عدي", "المغربي"]}, {"id": "ajana", "name": "عمال العجانة", "note": "مأخوذ من الشيت المرفق: حساب عمال العجانة 100 عالفرش", "rate": 0.1, "rateLabel": "الأجرة: 0.1 دينار / فرش", "unit": "فرش", "workers": ["ابو محمد", "عماد"]}, {"id": "arabi", "name": "عمال البسطة - عربي وأربع وتحميل طحين", "note": "مأخوذ من الشيت المرفق: الأجرة 1 قرش للفرش", "rate": 0.01, "rateLabel": "الأجرة: 0.01 دينار / فرش", "unit": "فرش", "workers": ["علي", "اوشا", "ممدوح", "فليكس", "ايهاب", "قاسم", "عمران"]}, {"id": "laf", "name": "عمال البسطة - لف", "note": "مأخوذ من الشيت المرفق: الأجرة 7 قروش للفرش", "rate": 0.07, "rateLabel": "الأجرة: 0.07 دينار / فرش", "unit": "فرش", "workers": ["علي", "اوشا", "ممدوح", "فليكس", "ايهاب", "قاسم", "عمران"]}, {"id": "modawar", "name": "عمال البسطة - مدور ومطبق", "note": "مأخوذ من الشيت المرفق: الأجرة 5 قروش للفرش", "rate": 0.05, "rateLabel": "الأجرة: 0.05 دينار / فرش", "unit": "فرش", "workers": ["علي", "اوشا", "ممدوح", "فليكس", "ايهاب", "قاسم", "عمران"]}]}, "users": [{"username": "admin", "password": "1234", "role": "admin", "active": true, "label": "المدير"}, {"username": "user1", "password": "1111", "role": "entry", "active": true, "label": "المستخدم 1"}, {"username": "user2", "password": "2222", "role": "entry", "active": true, "label": "المستخدم 2"}, {"username": "user3", "password": "3333", "role": "entry", "active": true, "label": "المستخدم 3"}]};
+function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
+function getMasterConfig(){ try { const raw = JSON.parse(localStorage.getItem(MASTER_CONFIG_KEY)); if(raw && raw.customers && raw.expenses && raw.wages) return raw; } catch(e){} localStorage.setItem(MASTER_CONFIG_KEY, JSON.stringify(DEFAULT_MASTER_CONFIG)); return deepClone(DEFAULT_MASTER_CONFIG); }
+function saveMasterConfig(cfg){ localStorage.setItem(MASTER_CONFIG_KEY, JSON.stringify(cfg)); }
+function getSessionUser(){ try { return JSON.parse(localStorage.getItem(SESSION_KEY)) || {username:'admin', role:'admin'}; } catch(e){ return {username:'admin', role:'admin'}; } }
+if(!localStorage.getItem(SESSION_KEY)) localStorage.setItem(SESSION_KEY, JSON.stringify({username:'admin', role:'admin'}));
+
+const __cfg = getMasterConfig();
+const generalExpenses = __cfg.expenses.general;
+const workers = __cfg.expenses.workers;
+const purchases = __cfg.expenses.purchases;
+
+const EXPENSE_STORAGE_KEY = 'bakery_expenses_v1';
+const searchInput = document.getElementById('searchInput');
+const yearInput = document.getElementById('yearInput');
+const monthInput = document.getElementById('monthInput');
+const dayInput = document.getElementById('dayInput');
+const generalBody = document.getElementById('generalBody');
+const workersBody = document.getElementById('workersBody');
+const purchaseBody = document.getElementById('purchaseBody');
+const dailyDateLabel = document.getElementById('dailyDateLabel');
+const monthlyTitle = document.getElementById('monthlyTitle');
+const annualTitle = document.getElementById('annualTitle');
+const printHeaderSub = document.getElementById('printHeaderSub');
+const printChipDate = document.getElementById('printChipDate');
+const printChipTab = document.getElementById('printChipTab');
+const printChipMonth = document.getElementById('printChipMonth');
+
+let activeTab='daily';
+let values = {general:{},workers:{},purchases:{}};
+generalExpenses.forEach(x=>values.general[x]=0);
+workers.forEach(x=>values.workers[x]=0);
+purchases.forEach(x=>values.purchases[x]=0);
+
+
+function expenseDateKey(){ return `${yearInput.value}-${String(monthInput.value).padStart(2,'0')}-${String(dayInput.value).padStart(2,'0')}`; }
+function blankExpenseValues(){
+  const v={general:{},workers:{},purchases:{}};
+  generalExpenses.forEach(x=>v.general[x]=0);
+  workers.forEach(x=>v.workers[x]=0);
+  purchases.forEach(x=>v.purchases[x]=0);
+  return v;
+}
+function getExpenseState(){
+  try { return JSON.parse(localStorage.getItem(EXPENSE_STORAGE_KEY)) || {entries:{}}; }
+  catch(e){ return {entries:{}}; }
+}
+function saveExpenseState(state){ localStorage.setItem(EXPENSE_STORAGE_KEY, JSON.stringify(state)); }
+function ensureExpenseDate(dateKey){
+  const state=getExpenseState();
+  if(!state.entries[dateKey]) state.entries[dateKey]=blankExpenseValues();
+  ['general','workers','purchases'].forEach(bucket=>{
+    Object.keys(blankExpenseValues()[bucket]).forEach(name=>{
+      if(typeof state.entries[dateKey][bucket]?.[name] !== 'number') {
+        if(!state.entries[dateKey][bucket]) state.entries[dateKey][bucket]={};
+        state.entries[dateKey][bucket][name]=0;
+      }
+    });
+  });
+  saveExpenseState(state);
+  return state;
+}
+function loadExpenseValues(){
+  const state=ensureExpenseDate(expenseDateKey());
+  values=JSON.parse(JSON.stringify(state.entries[expenseDateKey()]));
+}
+function saveExpenseValues(){
+  const state=ensureExpenseDate(expenseDateKey());
+  state.entries[expenseDateKey()] = JSON.parse(JSON.stringify(values));
+  saveExpenseState(state);
+}
+
+function todaySet(){
+  const d = new Date();
+  yearInput.value=d.getFullYear(); monthInput.value=d.getMonth()+1; dayInput.value=d.getDate();
+}
+todaySet();
+loadExpenseValues();
+
+function q(){ return (searchInput.value||'').trim().toLowerCase(); }
+function visible(list){ const s=q(); return !s ? list : list.filter(x=>x.toLowerCase().includes(s)); }
+
+function makeRows(container, list, bucket){
+  container.innerHTML='';
+  const filtered = visible(list);
+  if(!filtered.length){
+    container.innerHTML = '<div class="purchase-note">لا توجد بنود ضمن نتيجة البحث.</div>'; return;
+  }
+  filtered.forEach(name=>{
+    const row=document.createElement('div');
+    row.className='row';
+    row.innerHTML = `
+      <div class="name">${name}</div>
+      <div class="left-pack">
+        <div class="money">دينار</div>
+        <input class="money-input" type="number" step="0.01" value="${values[bucket][name]||0}" data-bucket="${bucket}" data-name="${name}">
+      </div>`;
+    container.appendChild(row);
+  });
+}
+
+function totalOf(bucket){ return Object.values(values[bucket]).reduce((a,b)=>a+(+b||0),0); }
+function grandTotal(){ return totalOf('general')+totalOf('workers')+totalOf('purchases'); }
+
+function syncTitles(){
+  const dateText = `${dayInput.value}/${monthInput.value}/${yearInput.value}`;
+  dailyDateLabel.textContent = dateText;
+  monthlyTitle.textContent = `${monthInput.value}/${yearInput.value}`;
+  annualTitle.textContent = yearInput.value;
+  const tabTitle = activeTab==='daily' ? 'يومية المصاريف' : activeTab==='monthly' ? 'كشف شهري للمصاريف والعمال' : 'التجميع السنوي للمصاريف';
+  printHeaderSub.textContent = tabTitle;
+  printChipDate.textContent = `التاريخ: ${dateText}`;
+  printChipTab.textContent = `النوع: ${tabTitle}`;
+  printChipMonth.textContent = `الفترة: ${monthInput.value}/${yearInput.value}`;
+}
+
+function renderDaily(){
+  makeRows(generalBody, generalExpenses, 'general');
+  makeRows(workersBody, workers, 'workers');
+  makeRows(purchaseBody, purchases, 'purchases');
+  document.getElementById('generalTotal').textContent = totalOf('general').toFixed(2);
+  document.getElementById('workerTotal').textContent = totalOf('workers').toFixed(2);
+  document.getElementById('purchaseTotal').textContent = totalOf('purchases').toFixed(2);
+  document.getElementById('dayGrand').textContent = grandTotal().toFixed(2);
+
+  document.querySelectorAll('.money-input').forEach(inp=>{
+    inp.oninput = e=>{
+      const b=e.target.dataset.bucket, n=e.target.dataset.name;
+      values[b][n]=+e.target.value||0;
+      saveExpenseValues();
+      renderDaily(); renderMonthly(); renderAnnual();
+    };
+  });
+  syncTitles();
+}
+
+function rebuildItemFilters(){
+  const monthSel=document.getElementById('itemFilterMonth');
+  const annualSel=document.getElementById('itemFilterAnnual');
+  const items=['كل البنود',...generalExpenses,...workers,...purchases];
+  monthSel.innerHTML = items.map(x=>`<option>${x}</option>`).join('');
+  annualSel.innerHTML = items.map(x=>`<option>${x}</option>`).join('');
+}
+
+function renderMonthly(){
+  const sec = document.getElementById('sectionFilterMonth').value;
+  const item = document.getElementById('itemFilterMonth').value;
+  const status = document.getElementById('statusFilterMonth').value;
+  const minAmount = +document.getElementById('minAmountMonth').value || 0;
+  const fromDay = +document.getElementById('fromDay').value || 1;
+  const toDay = +document.getElementById('toDay').value || 31;
+  const g=totalOf('general'), w=totalOf('workers'), p=totalOf('purchases'), gt=grandTotal();
+
+  let helper='يعرض نتائج الفلاتر الحالية ضمن الشهر المحدد.';
+  if(status==='أعلى مادة') helper='يعرض أعلى بند قيمة ضمن الشهر الحالي.';
+  if(status==='أقل مادة') helper='يعرض أقل بند له حركة ضمن الشهر الحالي.';
+  if(status==='أعلى يوم') helper='يعرض أعلى يوم حسب الحركة المتوفرة.';
+  if(status==='أقل يوم') helper='يعرض أقل يوم حسب الحركة المتوفرة.';
+  if(status==='أعلى بيع') helper='يعرض أعلى بيع ضمن نتائج الشهر الحالي.';
+  if(status==='أقل بيع') helper='يعرض أقل بيع ضمن نتائج الشهر الحالي.';
+  if(status==='أيام بها حركة') helper='يعرض أيام بها حركة فقط ضمن الشهر الحالي.';
+  if(status==='كل الأيام') helper='يعرض كل الأيام ضمن نطاق الفلتر.';
+  document.getElementById('monthHelper').textContent = helper;
+
+  document.getElementById('monthlyGeneral').textContent = g.toFixed(2);
+  document.getElementById('monthlyWorkers').textContent = w.toFixed(2);
+  document.getElementById('monthlyPurchases').textContent = p.toFixed(2);
+  document.getElementById('monthlyGrand').textContent = gt.toFixed(2);
+
+  const sections = [
+    ['المصاريف العامة', generalExpenses, values.general, g],
+    ['يوميات ورواتب العمال', workers, values.workers, w],
+    ['مشتريات البضاعة الخارجية', purchases, values.purchases, p]
+  ].filter(([title]) => sec==='كل الأقسام' || sec===title);
+
+  let head = '<th>اليوم</th>';
+  let row = `<td>${Math.min(Math.max(+dayInput.value, fromDay), toDay)}</td>`;
+  sections.forEach(([title, items, bucket, total])=>{
+    const filteredItems = items.filter(n => (item==='كل البنود' || item===n) && (+bucket[n]||0) >= minAmount);
+    filteredItems.forEach(n => head += `<th>${n}</th>`);
+    head += `<th>مجموع ${title}</th>`;
+    filteredItems.forEach(n => row += `<td>${(+bucket[n]||0).toFixed(2).replace('.00','')}</td>`);
+    row += `<td>${total.toFixed(2)}</td>`;
+  });
+  head += '<th>الإجمالي</th>';
+  row += `<td>${gt.toFixed(2)}</td>`;
+
+  document.getElementById('monthlyTable').innerHTML = `
+    <thead><tr>${head}</tr></thead>
+    <tbody>
+      <tr>${row}</tr>
+      <tr><td colspan="99" style="text-align:right;color:#7c8b9c">الحالة: ${status} | من يوم ${fromDay} إلى يوم ${toDay}</td></tr>
+    </tbody>
+    <tfoot><tr>${row.replace('<td>'+Math.min(Math.max(+dayInput.value, fromDay), toDay)+'</td>','<td>المجموع</td>')}</tr></tfoot>`;
+}
+
+function renderAnnual(){
+  const sec = document.getElementById('sectionFilterAnnual').value;
+  const status = document.getElementById('statusFilterAnnual').value;
+  const fromM = +document.getElementById('fromMonth').value || 1;
+  const toM = +document.getElementById('toMonth').value || 12;
+  const g=totalOf('general'), w=totalOf('workers'), p=totalOf('purchases'), gt=grandTotal();
+
+  let months = [];
+  for(let m=1;m<=12;m++){
+    months.push({m, g: m===+monthInput.value ? g : 0, w: m===+monthInput.value ? w : 0, p: m===+monthInput.value ? p : 0});
+  }
+  months = months.filter(x => x.m>=fromM && x.m<=toM);
+  if(status==='أشهر بها حركة') months = months.filter(x => x.g+x.w+x.p>0);
+  if(status==='أعلى شهر' || status==='أعلى بيع'){
+    months = [months.reduce((a,b)=>(a.g+a.w+a.p) >= (b.g+b.w+b.p) ? a : b)];
+  }
+  if(status==='أقل شهر' || status==='أقل بيع'){
+    const pos=months.filter(x=>x.g+x.w+x.p>0);
+    if(pos.length) months = [pos.reduce((a,b)=>(a.g+a.w+a.p) <= (b.g+b.w+b.p) ? a : b)];
+  }
+
+  document.getElementById('annualHelper').textContent =
+    status==='كل الأشهر' ? 'يعرض 12 شهر من بداية السنة إلى نهايتها.' :
+    status==='أشهر بها حركة' ? 'يعرض الأشهر التي تحتوي على حركة فقط.' :
+    `تم تطبيق فلتر: ${status}`;
+
+  document.getElementById('annualGeneral').textContent = g.toFixed(2);
+  document.getElementById('annualWorkers').textContent = w.toFixed(2);
+  document.getElementById('annualPurchases').textContent = p.toFixed(2);
+  document.getElementById('annualGrand').textContent = gt.toFixed(2);
+
+  const rows = months.map(x=>`<tr><td>شهر ${x.m}</td><td>${x.g.toFixed(2)}</td><td>${x.w.toFixed(2)}</td><td>${x.p.toFixed(2)}</td><td>${(x.g+x.w+x.p).toFixed(2)}</td></tr>`).join('');
+  document.getElementById('annualTable').innerHTML = `
+    <thead><tr><th>الشهر</th><th>المصاريف العامة</th><th>يوميات ورواتب العمال</th><th>مشتريات البضاعة الخارجية</th><th>الإجمالي</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="5">لا توجد نتائج ضمن الفلاتر الحالية.</td></tr>'}</tbody>
+    <tfoot><tr><td>المجموع السنوي</td><td class="lav">${g.toFixed(2)}</td><td class="green">${w.toFixed(2)}</td><td class="orange">${p.toFixed(2)}</td><td>${gt.toFixed(2)}</td></tr></tfoot>`;
+}
+
+function doPrint(){ syncTitles(); window.print(); }
+
+document.querySelectorAll('.section-tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.section-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab=btn.dataset.tab;
+    document.getElementById('dailyView').classList.toggle('hidden', activeTab!=='daily');
+    document.getElementById('monthlyView').classList.toggle('hidden', activeTab!=='monthly');
+    document.getElementById('annualView').classList.toggle('hidden', activeTab!=='annual');
+    syncTitles();
+  });
+});
+
+['searchInput','yearInput','monthInput','dayInput','sectionFilterMonth','itemFilterMonth','statusFilterMonth','minAmountMonth','fromDay','toDay','sectionFilterAnnual','itemFilterAnnual','statusFilterAnnual','minAmountAnnual','fromMonth','toMonth']
+.forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('input', ()=>{loadExpenseValues();renderDaily();renderMonthly();renderAnnual();syncTitles();});
+  if(el && el.tagName==='SELECT') el.addEventListener('change', ()=>{renderDaily();renderMonthly();renderAnnual();syncTitles();});
+});
+document.getElementById('printPageBtn').addEventListener('click', doPrint);
+document.querySelectorAll('.js-print').forEach(btn=>btn.addEventListener('click', doPrint));
+
+rebuildItemFilters();
+renderDaily();
+renderMonthly();
+renderAnnual();
+syncTitles();
+</script>
+</body>
+</html>
