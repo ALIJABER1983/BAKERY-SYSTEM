@@ -1,16 +1,14 @@
 services:
   - type: web
-    name: bakery-cloud-system
+    name: bakery-cloud-system-free
     env: python
-    plan: starter
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn --bind 0.0.0.0:$PORT app:app
     envVars:
       - key: SECRET_KEY
         generateValue: true
-      - key: DB_PATH
-        value: /var/data/bakery.sqlite3
-    disks:
-      - name: bakery-data
-        mountPath: /var/data
-        sizeGB: 1
+      - key: DATABASE_URL
+        sync: false
+      - key: MIGRATE_SQLITE_ON_FIRST_RUN
+        value: true

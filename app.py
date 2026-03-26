@@ -7,11 +7,21 @@ from functools import wraps
 from pathlib import Path
 from typing import Any
 
-from flask import Flask, jsonify, request, send_from_directory, session
+from flask import Flask, Response, jsonify, request, send_from_directory, session
+
+try:
+    import psycopg
+    from psycopg.rows import dict_row
+except Exception:  # pragma: no cover
+    psycopg = None
+    dict_row = None
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = Path(os.environ.get('DB_PATH', str(BASE_DIR / 'database' / 'bakery.sqlite3')))
+SQLITE_DB_PATH = Path(os.environ.get('DB_PATH', str(BASE_DIR / 'database' / 'bakery.sqlite3')))
+DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
 DEFAULT_CONFIG_PATH = BASE_DIR / 'default_master_config.json'
+SEED_SQLITE_PATH = Path(os.environ.get('SEED_SQLITE_PATH', str(BASE_DIR / 'database' / 'bakery.sqlite3')))
+IS_POSTGRES = bool(DATABASE_URL)
 APP_STATE_DEFAULTS = {
     'bakery_sales_v1': {'customers': {}},
     'bakery_expenses_v1': {'entries': {}},
@@ -23,84 +33,189 @@ def load_default_master_config() -> dict[str, Any]:
     return json.loads(DEFAULT_CONFIG_PATH.read_text(encoding='utf-8'))
 
 
-def get_db() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH, timeout=30, check_same_thread=False)
+def get_db():
+    if IS_POSTGRES:
+        if psycopg is None:
+            raise RuntimeError('psycopg is not installed')
+        conn = psycopg.connect(DATABASE_URL, row_factory=dict_row)
+        conn.autocommit = False
+        return conn
+
+    SQLITE_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(SQLITE_DB_PATH, timeout=30, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute('PRAGMA journal_mode=WAL')
     conn.execute('PRAGMA synchronous=NORMAL')
     return conn
 
 
-def upsert_user(conn: sqlite3.Connection, user: dict[str, Any]) -> None:
-    conn.execute(
-        '''
-        INSERT INTO users(username, password, role, active, label)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(username) DO UPDATE SET
-          password=excluded.password,
-          role=excluded.role,
-          active=excluded.active,
-          label=excluded.label
-        ''',
-        (
-            user['username'],
-            user['password'],
-            user.get('role', 'entry'),
-            1 if user.get('active', True) else 0,
-            user.get('label', user['username']),
-        ),
-    )
+def normalize_row(row):
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row
+    if hasattr(row, 'keys'):
+        return dict(row)
+    return row
 
 
-def sync_users_from_config(conn: sqlite3.Connection, config: dict[str, Any]) -> None:
+def fetchone(query: str, params: tuple = ()):
+    conn = get_db()
+    try:
+        row = conn.execute(query, params).fetchone()
+        conn.commit()
+        return normalize_row(row)
+    finally:
+        conn.close()
+
+
+def fetchall(query: str, params: tuple = ()):
+    conn = get_db()
+    try:
+        rows = conn.execute(query, params).fetchall()
+        conn.commit()
+        return [normalize_row(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def upsert_user(conn, user: dict[str, Any]) -> None:
+    if IS_POSTGRES:
+        conn.execute(
+            """
+            INSERT INTO users(username, password, role, active, label)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT(username) DO UPDATE SET
+              password=excluded.password,
+              role=excluded.role,
+              active=excluded.active,
+              label=excluded.label
+            """,
+            (
+                user['username'],
+                user['password'],
+                user.get('role', 'entry'),
+                bool(user.get('active', True)),
+                user.get('label', user['username']),
+            ),
+        )
+    else:
+        conn.execute(
+            """
+            INSERT INTO users(username, password, role, active, label)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(username) DO UPDATE SET
+              password=excluded.password,
+              role=excluded.role,
+              active=excluded.active,
+              label=excluded.label
+            """,
+            (
+                user['username'],
+                user['password'],
+                user.get('role', 'entry'),
+                1 if user.get('active', True) else 0,
+                user.get('label', user['username']),
+            ),
+        )
+
+
+def sync_users_from_config(conn, config: dict[str, Any]) -> None:
     usernames = []
     for user in config.get('users', []):
         usernames.append(user['username'])
         upsert_user(conn, user)
     if usernames:
-        placeholders = ','.join('?' for _ in usernames)
+        placeholders = ','.join(['%s' if IS_POSTGRES else '?'] * len(usernames))
         conn.execute(f'DELETE FROM users WHERE username NOT IN ({placeholders})', usernames)
     conn.commit()
 
 
-def init_db() -> None:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = get_db()
-    conn.execute(
-        'CREATE TABLE IF NOT EXISTS app_state (key TEXT PRIMARY KEY, value TEXT NOT NULL)'
-    )
-    conn.execute(
-        '''
-        CREATE TABLE IF NOT EXISTS users (
-          username TEXT PRIMARY KEY,
-          password TEXT NOT NULL,
-          role TEXT NOT NULL,
-          active INTEGER NOT NULL DEFAULT 1,
-          label TEXT NOT NULL
-        )
-        '''
-    )
-    row = conn.execute(
-        "SELECT value FROM app_state WHERE key='bakery_master_config_v1'"
-    ).fetchone()
-    if row is None:
-        default_config = load_default_master_config()
-        conn.execute(
-            'INSERT INTO app_state(key, value) VALUES (?, ?)',
-            ('bakery_master_config_v1', json.dumps(default_config, ensure_ascii=False)),
-        )
-        sync_users_from_config(conn, default_config)
-    else:
-        existing_config = json.loads(row['value'])
-        sync_users_from_config(conn, existing_config)
+def import_seed_from_sqlite_if_needed(conn) -> None:
+    if not IS_POSTGRES:
+        return
+    if os.environ.get('MIGRATE_SQLITE_ON_FIRST_RUN', 'true').lower() not in {'1', 'true', 'yes'}:
+        return
+    if not SEED_SQLITE_PATH.exists():
+        return
+    row = conn.execute('SELECT COUNT(*) AS c FROM app_state').fetchone()
+    if row and int(row['c']) > 0:
+        return
 
-    for key, value in APP_STATE_DEFAULTS.items():
-        conn.execute(
-            'INSERT OR IGNORE INTO app_state(key, value) VALUES (?, ?)',
-            (key, json.dumps(value, ensure_ascii=False)),
-        )
-    conn.commit()
-    conn.close()
+    seed = sqlite3.connect(SEED_SQLITE_PATH)
+    seed.row_factory = sqlite3.Row
+    try:
+        tables = {r['name'] for r in seed.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if 'users' in tables:
+            for r in seed.execute('SELECT username, password, role, active, label FROM users').fetchall():
+                upsert_user(conn, dict(r))
+        if 'app_state' in tables:
+            for r in seed.execute('SELECT key, value FROM app_state').fetchall():
+                conn.execute(
+                    """
+                    INSERT INTO app_state(key, value) VALUES (%s, %s)
+                    ON CONFLICT(key) DO UPDATE SET value=excluded.value
+                    """,
+                    (r['key'], r['value']),
+                )
+        conn.commit()
+    finally:
+        seed.close()
+
+
+def init_db() -> None:
+    conn = get_db()
+    try:
+        conn.execute('CREATE TABLE IF NOT EXISTS app_state (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
+        if IS_POSTGRES:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS users (
+                  username TEXT PRIMARY KEY,
+                  password TEXT NOT NULL,
+                  role TEXT NOT NULL,
+                  active BOOLEAN NOT NULL DEFAULT TRUE,
+                  label TEXT NOT NULL
+                )
+                """
+            )
+            import_seed_from_sqlite_if_needed(conn)
+        else:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS users (
+                  username TEXT PRIMARY KEY,
+                  password TEXT NOT NULL,
+                  role TEXT NOT NULL,
+                  active INTEGER NOT NULL DEFAULT 1,
+                  label TEXT NOT NULL
+                )
+                """
+            )
+
+        row = conn.execute(
+            "SELECT value FROM app_state WHERE key=%s" if IS_POSTGRES else "SELECT value FROM app_state WHERE key=?",
+            ('bakery_master_config_v1',),
+        ).fetchone()
+        if row is None:
+            default_config = load_default_master_config()
+            conn.execute(
+                "INSERT INTO app_state(key, value) VALUES (%s, %s) ON CONFLICT(key) DO NOTHING" if IS_POSTGRES else "INSERT OR IGNORE INTO app_state(key, value) VALUES (?, ?)",
+                ('bakery_master_config_v1', json.dumps(default_config, ensure_ascii=False)),
+            )
+            sync_users_from_config(conn, default_config)
+        else:
+            existing_config = json.loads(row['value'])
+            sync_users_from_config(conn, existing_config)
+
+        for key, value in APP_STATE_DEFAULTS.items():
+            conn.execute(
+                "INSERT INTO app_state(key, value) VALUES (%s, %s) ON CONFLICT(key) DO NOTHING" if IS_POSTGRES else "INSERT OR IGNORE INTO app_state(key, value) VALUES (?, ?)",
+                (key, json.dumps(value, ensure_ascii=False)),
+            )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 app = Flask(__name__, static_folder='public', static_url_path='/static')
@@ -109,7 +224,6 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
 )
-app.wsgi_app = app.wsgi_app
 
 
 @app.after_request
@@ -122,11 +236,10 @@ def current_user() -> dict[str, Any] | None:
     username = session.get('username')
     if not username:
         return None
-    conn = get_db()
-    row = conn.execute(
-        'SELECT username, role, active, label FROM users WHERE username = ?', (username,)
-    ).fetchone()
-    conn.close()
+    row = fetchone(
+        'SELECT username, role, active, label FROM users WHERE username = %s' if IS_POSTGRES else 'SELECT username, role, active, label FROM users WHERE username = ?',
+        (username,),
+    )
     if not row or not row['active']:
         session.clear()
         return None
@@ -160,9 +273,10 @@ def require_admin(fn):
 
 
 def read_state(key: str) -> Any:
-    conn = get_db()
-    row = conn.execute('SELECT value FROM app_state WHERE key=?', (key,)).fetchone()
-    conn.close()
+    row = fetchone(
+        'SELECT value FROM app_state WHERE key=%s' if IS_POSTGRES else 'SELECT value FROM app_state WHERE key=?',
+        (key,),
+    )
     if row is None:
         return None
     return json.loads(row['value'])
@@ -170,18 +284,23 @@ def read_state(key: str) -> Any:
 
 def write_state(key: str, value: Any) -> None:
     conn = get_db()
-    conn.execute(
-        '''
-        INSERT INTO app_state(key, value) VALUES (?, ?)
-        ON CONFLICT(key) DO UPDATE SET value=excluded.value
-        ''',
-        (key, json.dumps(value, ensure_ascii=False)),
-    )
-    if key == 'bakery_master_config_v1':
-        sync_users_from_config(conn, value)
-    else:
-        conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            """
+            INSERT INTO app_state(key, value) VALUES (%s, %s)
+            ON CONFLICT(key) DO UPDATE SET value=excluded.value
+            """ if IS_POSTGRES else """
+            INSERT INTO app_state(key, value) VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value=excluded.value
+            """,
+            (key, json.dumps(value, ensure_ascii=False)),
+        )
+        if key == 'bakery_master_config_v1':
+            sync_users_from_config(conn, value)
+        else:
+            conn.commit()
+    finally:
+        conn.close()
 
 
 @app.get('/')
@@ -191,7 +310,7 @@ def index():
 
 @app.get('/health')
 def health():
-    return jsonify({'ok': True})
+    return jsonify({'ok': True, 'backend': 'postgres' if IS_POSTGRES else 'sqlite'})
 
 
 @app.post('/api/login')
@@ -202,12 +321,10 @@ def login():
     if not username or not password:
         return jsonify({'ok': False, 'error': 'MISSING_CREDENTIALS'}), 400
 
-    conn = get_db()
-    row = conn.execute(
-        'SELECT username, password, role, active, label FROM users WHERE username = ?',
+    row = fetchone(
+        'SELECT username, password, role, active, label FROM users WHERE username = %s' if IS_POSTGRES else 'SELECT username, password, role, active, label FROM users WHERE username = ?',
         (username,),
-    ).fetchone()
-    conn.close()
+    )
     if not row or row['password'] != password or not row['active']:
         return jsonify({'ok': False, 'error': 'INVALID_LOGIN'}), 401
 
@@ -282,10 +399,21 @@ def save_batch():
 @app.get('/api/export/database')
 @require_admin
 def export_database():
-    return send_from_directory(DB_PATH.parent, DB_PATH.name, as_attachment=True)
+    payload = {
+        'backend': 'postgres' if IS_POSTGRES else 'sqlite',
+        'users': fetchall('SELECT username, role, active, label FROM users ORDER BY username'),
+        'app_state': fetchall('SELECT key, value FROM app_state ORDER BY key'),
+    }
+    raw = json.dumps(payload, ensure_ascii=False, indent=2)
+    return Response(
+        raw,
+        mimetype='application/json',
+        headers={'Content-Disposition': 'attachment; filename=bakery-export.json'},
+    )
 
+
+init_db()
 
 if __name__ == '__main__':
-    init_db()
     port = int(os.environ.get('PORT', '8000'))
     app.run(host='0.0.0.0', port=port, debug=False)

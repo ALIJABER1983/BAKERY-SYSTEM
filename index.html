@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>نظام إدارة مشغل المهندس للمخبوزات - نسخة سحابية</title>
+<style>
+:root{--navy:#1d2b47;--navy-soft:#304668;--orange:#f2a20b;--bg:#edf2f7;--line:#d8e0ea;--text:#17304f;--green:#18a54a;--red:#dc2626}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);font-family:"Cairo","Tajawal","Segoe UI",Tahoma,Arial,sans-serif;color:var(--text)}
+body{overflow:hidden;display:flex;flex-direction:column}
+.hidden{display:none!important}
+.topbar{background:var(--navy);padding:10px 18px 0;color:#fff;box-shadow:0 12px 30px rgba(14,26,44,.08)}
+.top-inner{max-width:1500px;margin:0 auto}.top-row{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.title-wrap{display:flex;align-items:center;gap:14px;color:#ffb320;font-size:30px;font-weight:900}.left-tools{display:flex;gap:10px;align-items:center}
+.pill-btn{background:var(--navy-soft);color:#fff;border:none;border-radius:12px;height:44px;padding:0 18px;font-size:16px;font-weight:800;cursor:pointer}.tabs{display:flex;gap:10px;align-items:flex-end;overflow:auto;padding:8px 0 0}
+.main-tab{background:var(--navy-soft);color:#dfe8f5;border:none;height:54px;padding:0 28px;font-size:18px;font-weight:800;white-space:nowrap;border-radius:16px 16px 0 0;cursor:pointer}.main-tab.active{background:var(--orange);color:#1b2436}
+.content{height:calc(100vh - 116px);max-width:1500px;width:100%;margin:0 auto;padding:0 18px 18px;flex:1}.content iframe{width:100%;height:100%;border:none;background:#fff;border-radius:0 0 20px 20px;display:block}
+.status-pill{padding:8px 12px;border-radius:999px;background:#263855;color:#dbeafe;font-size:14px;font-weight:800}
+.status-pill.ok{background:#134e4a;color:#d1fae5}.status-pill.err{background:#7f1d1d;color:#fee2e2}
+.login-screen{position:fixed;inset:0;background:linear-gradient(180deg,#1d2b47,#152138);display:flex;align-items:center;justify-content:center;padding:24px;z-index:100}
+.login-card{width:100%;max-width:520px;background:#fff;border-radius:26px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.22)}
+.login-top{padding:36px 30px 24px;background:var(--navy);color:#fff;text-align:center}.login-top .shield{width:68px;height:68px;border-radius:50%;margin:0 auto 16px;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:34px}.login-top h1{margin:0 0 10px;color:#ffb320;font-size:30px}.login-top p{margin:0;color:#e3edf9;font-size:18px}
+.login-body{padding:28px}.field{margin-bottom:16px}.label{display:block;margin-bottom:8px;font-size:18px;font-weight:800}.input{width:100%;height:56px;border:2px solid #dbe3ee;border-radius:14px;padding:0 16px;font-size:18px}.input:focus{outline:none;border-color:var(--orange)}
+.btn{height:54px;border:none;border-radius:14px;padding:0 18px;font-size:18px;font-weight:900;cursor:pointer}.btn-primary{background:var(--orange);color:#1b2436;width:100%}.error{min-height:28px;color:var(--red);font-weight:700}
+@media (max-width:900px){.title-wrap{font-size:24px}.content{height:calc(100vh - 150px)}}
+</style>
+</head>
+<body>
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="login-top">
+      <div class="shield">🛡️</div>
+      <h1 id="loginBakeryName">مشغل المهندس للمخبوزات</h1>
+      <p>نسخة سحابية بقاعدة بيانات وتسجيل دخول</p>
+    </div>
+    <div class="login-body">
+      <div class="field">
+        <label class="label" for="usernameInput">اسم المستخدم</label>
+        <input id="usernameInput" class="input" autocomplete="username" value="admin" />
+      </div>
+      <div class="field">
+        <label class="label" for="passwordInput">كلمة المرور</label>
+        <input id="passwordInput" class="input" type="password" autocomplete="current-password" value="1234" />
+      </div>
+      <div id="loginError" class="error"></div>
+      <button id="loginBtn" class="btn btn-primary" type="button">دخول إلى النظام</button>
+    </div>
+  </div>
+</div>
+
+<header id="appTopbar" class="topbar hidden">
+  <div class="top-inner">
+    <div class="top-row">
+      <div id="bakeryTitle" class="title-wrap"><span>🕘</span> نظام إدارة مشغل المهندس للمخبوزات</div>
+      <div class="left-tools">
+        <span id="syncStatus" class="status-pill">جاري التحميل...</span>
+        <button id="userBadge" class="pill-btn" type="button">المدير - admin 🛡</button>
+        <button id="logoutBtn" class="pill-btn" type="button">خروج ⎋</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="main-tab active" type="button" data-view="customers">العملاء والمبيعات 👥</button>
+      <button class="main-tab" type="button" data-view="expenses">المصاريف والعمال 🎁</button>
+      <button class="main-tab" type="button" data-view="wages">احتساب أجور العمال 🧾</button>
+      <button class="main-tab" type="button" data-view="analysis">التحليل العام ◔</button>
+      <button id="settingsTab" class="main-tab" type="button" data-view="settings">الإعدادات العامة ⚙</button>
+    </div>
+  </div>
+</header>
+
+<div class="content hidden" id="appContent">
+  <iframe id="appFrame"></iframe>
+</div>
+
+<script>
+const PAGE_FILES = {
+  customers: '/static/pages/customers.html',
+  expenses: '/static/pages/expenses.html',
+  wages: '/static/pages/wages.html',
+  analysis: '/static/pages/analysis.html',
+  settings: '/static/pages/settings.html'
+};
+
+let currentView = 'customers';
+let store = {};
+let currentUser = null;
+let syncTimer = null;
+let pendingUpdates = {};
+let pageHtmlCache = {};
+let lastStoreSignature = '';
+let refreshTimer = null;
+
+const loginScreen = document.getElementById('loginScreen');
+const appTopbar = document.getElementById('appTopbar');
+const appContent = document.getElementById('appContent');
+const frame = document.getElementById('appFrame');
+const loginBtn = document.getElementById('loginBtn');
+const usernameInput = document.getElementById('usernameInput');
+const passwordInput = document.getElementById('passwordInput');
+const loginError = document.getElementById('loginError');
+const syncStatus = document.getElementById('syncStatus');
+const userBadge = document.getElementById('userBadge');
+const logoutBtn = document.getElementById('logoutBtn');
+const bakeryTitle = document.getElementById('bakeryTitle');
+const loginBakeryName = document.getElementById('loginBakeryName');
+const settingsTab = document.getElementById('settingsTab');
+
+function setStatus(text, kind='') {
+  syncStatus.textContent = text;
+  syncStatus.className = `status-pill ${kind}`.trim();
+}
+
+function clone(v){ return JSON.parse(JSON.stringify(v)); }
+function stableStringify(v){ try { return JSON.stringify(v); } catch { return ''; } }
+
+async function api(path, options={}){
+  const res = await fetch(path, {
+    credentials:'same-origin',
+    headers:{'Content-Type':'application/json', ...(options.headers||{})},
+    ...options
+  });
+  const data = await res.json().catch(() => ({}));
+  if(!res.ok) throw Object.assign(new Error(data.error || 'REQUEST_FAILED'), {status: res.status, data});
+  return data;
+}
+
+async function fetchBootstrap(){
+  const data = await api('/api/bootstrap');
+  store = data.store || {};
+  currentUser = data.user || null;
+  lastStoreSignature = stableStringify(store);
+  applyChrome();
+}
+
+function hasPendingChanges(){ return Object.keys(pendingUpdates).length > 0; }
+function shouldAutoRefreshFrame(){
+  try {
+    const doc = frame.contentDocument;
+    if(!doc) return true;
+    const active = doc.activeElement;
+    if(!active) return true;
+    const tag = (active.tagName || '').toLowerCase();
+    return !['input','textarea','select'].includes(tag);
+  } catch {
+    return true;
+  }
+}
+async function pollForRemoteChanges(){
+  if(!currentUser || hasPendingChanges()) return;
+  try {
+    const before = lastStoreSignature || stableStringify(store);
+    await fetchBootstrap();
+    const after = stableStringify(store);
+    lastStoreSignature = after;
+    if(before && before !== after && shouldAutoRefreshFrame()){
+      await loadView(currentView);
+      setStatus('تم تحديث البيانات', 'ok');
+    }
+  } catch {}
+}
+function startAutoRefresh(){
+  stopAutoRefresh();
+  refreshTimer = setInterval(pollForRemoteChanges, 4000);
+}
+function stopAutoRefresh(){
+  if(refreshTimer){ clearInterval(refreshTimer); refreshTimer = null; }
+}
+
+function applyChrome(){
+  const cfg = store['bakery_master_config_v1'] || {};
+  const bakeryName = cfg.bakeryName || 'مشغل المهندس للمخبوزات';
+  bakeryTitle.innerHTML = `<span>🕘</span> نظام إدارة ${bakeryName}`;
+  loginBakeryName.textContent = bakeryName;
+  const label = currentUser?.label || currentUser?.username || 'مستخدم';
+  const icon = currentUser?.role === 'admin' ? '🛡' : '✍';
+  userBadge.textContent = `${label} - ${currentUser?.username || ''} ${icon}`;
+  settingsTab.classList.toggle('hidden', currentUser?.role !== 'admin');
+  if(currentUser?.role !== 'admin' && currentView === 'settings') currentView = 'customers';
+}
+
+async function ensurePageTemplate(view){
+  if(pageHtmlCache[view]) return pageHtmlCache[view];
+  const html = await fetch(PAGE_FILES[view], {credentials:'same-origin'}).then(r => r.text());
+  pageHtmlCache[view] = html;
+  return html;
+}
+
+function buildInjectedPage(rawHtml){
+  const payload = JSON.stringify(store).replace(/</g, '\\u003c');
+  const bridge = `
+<script>
+window.__BOOTSTRAP_STORE = ${payload};
+(function(){
+  const internalStore = window.__BOOTSTRAP_STORE || {};
+  const storageApi = {
+    getItem(key){ return Object.prototype.hasOwnProperty.call(internalStore, key) ? String(internalStore[key]) : null; },
+    setItem(key, value){ internalStore[key] = String(value); parent.postMessage({type:'bakery-storage-update', key, value: String(value)}, '*'); },
+    removeItem(key){ delete internalStore[key]; parent.postMessage({type:'bakery-storage-remove', key}, '*'); },
+    clear(){ Object.keys(internalStore).forEach(key => delete internalStore[key]); parent.postMessage({type:'bakery-storage-clear'}, '*'); },
+    key(index){ return Object.keys(internalStore)[index] || null; },
+    get length(){ return Object.keys(internalStore).length; }
+  };
+  Object.defineProperty(window, 'localStorage', {value: storageApi, configurable: true});
+  Object.defineProperty(window, 'sessionStorage', {value: storageApi, configurable: true});
+})();
+</script>`;
+  const style = `<style>.login-screen,.topbar{display:none!important}</style>`;
+  return rawHtml.replace('</head>', `${style}${bridge}</head>`);
+}
+
+async function loadView(view){
+  currentView = view;
+  document.querySelectorAll('.main-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.view === view));
+  const raw = await ensurePageTemplate(view);
+  frame.srcdoc = buildInjectedPage(raw);
+}
+
+async function flushUpdates(){
+  if(!Object.keys(pendingUpdates).length) return;
+  const updates = clone(pendingUpdates);
+  pendingUpdates = {};
+  setStatus('جاري الحفظ...', '');
+  try {
+    await api('/api/state/batch', {method:'POST', body: JSON.stringify({updates})});
+    setStatus('تم الحفظ', 'ok');
+  } catch (err) {
+    Object.assign(pendingUpdates, updates);
+    setStatus('تعذر الحفظ', 'err');
+    console.error(err);
+  }
+}
+
+function queueSync(key, value){
+  if(key === 'bakery_session_v1') return;
+  try { pendingUpdates[key] = JSON.parse(value); } catch { pendingUpdates[key] = value; }
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(flushUpdates, 500);
+}
+
+window.addEventListener('message', event => {
+  if(!event.data || typeof event.data !== 'object') return;
+  if(event.data.type === 'bakery-storage-update'){
+    store[event.data.key] = event.data.value;
+    if(event.data.key === 'bakery_master_config_v1'){
+      try { store[event.data.key] = JSON.parse(event.data.value); } catch {}
+      applyChrome();
+    }
+    queueSync(event.data.key, event.data.value);
+  }
+});
+
+document.querySelectorAll('.main-tab').forEach(btn => btn.addEventListener('click', () => {
+  if(btn.dataset.view === 'settings' && currentUser?.role !== 'admin') return;
+  loadView(btn.dataset.view);
+}));
+
+logoutBtn.addEventListener('click', async () => {
+  await flushUpdates();
+  try { await api('/api/logout', {method:'POST', body:'{}'}); } catch {}
+  stopAutoRefresh();
+  currentUser = null;
+  store = {};
+  lastStoreSignature = '';
+  appTopbar.classList.add('hidden');
+  appContent.classList.add('hidden');
+  loginScreen.classList.remove('hidden');
+  loginError.textContent = '';
+  setStatus('');
+});
+
+loginBtn.addEventListener('click', async () => {
+  loginError.textContent = '';
+  try {
+    await api('/api/login', {method:'POST', body: JSON.stringify({username: usernameInput.value, password: passwordInput.value})});
+    await fetchBootstrap();
+    loginScreen.classList.add('hidden');
+    appTopbar.classList.remove('hidden');
+    appContent.classList.remove('hidden');
+    setStatus('تم الاتصال', 'ok');
+    startAutoRefresh();
+    await loadView(currentView);
+  } catch (err) {
+    loginError.textContent = 'بيانات الدخول غير صحيحة أو المستخدم معطل.';
+  }
+});
+
+window.addEventListener('focus', async () => {
+  if(!currentUser) return;
+  try {
+    await flushUpdates();
+    await fetchBootstrap();
+    await loadView(currentView);
+  } catch {}
+});
+
+(async function init(){
+  try {
+    const sessionData = await api('/api/session');
+    if(sessionData.ok && sessionData.user){
+      await fetchBootstrap();
+      loginScreen.classList.add('hidden');
+      appTopbar.classList.remove('hidden');
+      appContent.classList.remove('hidden');
+      setStatus('تم الاتصال', 'ok');
+      startAutoRefresh();
+      await loadView(currentView);
+    } else {
+      loginScreen.classList.remove('hidden');
+    }
+  } catch {
+    loginScreen.classList.remove('hidden');
+  }
+})();
+</script>
+</body>
+</html>
