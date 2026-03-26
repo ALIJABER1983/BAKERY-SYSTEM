@@ -346,7 +346,7 @@ def debug_login(username, password):
     return jsonify({"ok": True, "user": user})
 @app.post('/api/login')
 def login():
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(force=True, silent=True) or {}
     username = (payload.get('username') or '').strip()
     password = payload.get('password') or ''
     if not username or not password:
