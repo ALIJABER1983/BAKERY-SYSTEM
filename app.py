@@ -7,7 +7,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Any
 
-from flask import Flask, Response, jsonify, request, send_from_directory, session
+from flask import Flask, Response, jsonify, request, send_from_directory
 
 try:
     import psycopg
@@ -218,7 +218,14 @@ def init_db() -> None:
         conn.close()
 
 
-app = app = app = Flask(__name__, static_folder='public', static_url_path='/static')
+app = Flask(__name__, static_folder='public', static_url_path='/static')
+@app.route("/")
+def home():
+    return send_from_directory(".", "index.html")
+
+@app.route("/index.html")
+def home_index():
+    return send_from_directory(".", "index.html")
 app.secret_key = os.environ.get('SECRET_KEY', 'bakery-change-me-in-production')
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
