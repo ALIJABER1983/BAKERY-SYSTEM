@@ -204,7 +204,7 @@ window.__BOOTSTRAP_STORE = ${payload};
   Object.defineProperty(window, 'localStorage', {value: storageApi, configurable: true});
   Object.defineProperty(window, 'sessionStorage', {value: storageApi, configurable: true});
 })();
-</script>`;
+<\/script>`;
   const style = `<style>.login-screen,.topbar{display:none!important}</style>`;
   return rawHtml.replace('</head>', `${style}${bridge}</head>`);
 }
