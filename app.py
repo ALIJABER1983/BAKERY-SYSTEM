@@ -161,7 +161,13 @@ def import_seed_from_sqlite_if_needed(conn) -> None:
         conn.commit()
     finally:
         seed.close()
-
+@app.get('/<path:path>')
+def spa_fallback(path):
+    if path.startswith('api/'):
+        return jsonify({'ok': False, 'error': 'NOT_FOUND'}), 404
+    if path in {'health', 'debug-users', 'force-sync-users'}:
+        return jsonify({'ok': False, 'error': 'NOT_FOUND'}), 404
+    return send_from_directory('.', 'index.html')
 
 def init_db() -> None:
     conn = get_db()
