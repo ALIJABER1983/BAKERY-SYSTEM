@@ -160,7 +160,7 @@ def import_seed_from_sqlite_if_needed(conn) -> None:
                 )
         conn.commit()
     finally:
-        seed.close())
+        seed.close()
 
 
 def init_db() -> None:
