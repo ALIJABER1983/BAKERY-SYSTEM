@@ -169,6 +169,7 @@ def spa_fallback(path):
         return jsonify({'ok': False, 'error': 'NOT_FOUND'}), 404
     return send_from_directory('.', 'index.html')
 
+
 def init_db() -> None:
     conn = get_db()
     try:
