@@ -331,17 +331,6 @@ def force_sync_users():
 def debug_users():
     rows = fetchall("SELECT username, password, role, active, label FROM users ORDER BY username")
     return jsonify({"ok": True, "users": rows})
-    @app.get('/debug-login/<username>/<password>')
-def debug_login(username, password):
-    user = fetchone(
-        "SELECT username, password, role, active, label FROM users WHERE username = ?",
-        (username,)
-    )
-    if not user:
-        return jsonify({"ok": False, "reason": "user_not_found"})
-    if not user.get("active"):
-        return jsonify({"ok": False, "reason": "user_disabled", "user": user})
-    if str(user.get("password")) != str(password):
         return jsonify({"ok": False, "reason": "password_mismatch", "user": user})
     return jsonify({"ok": True, "user": user})
 @app.post('/api/login')
